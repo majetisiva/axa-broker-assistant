@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Broker portal (demo host page) – Broker assistant</title>
+<style>
+  body { margin:0; font-family:"Source Sans Pro","Segoe UI",system-ui,sans-serif; color:#1a1a2e; background:#f4f5f9; }
+  .top { background:#00008f; color:#fff; padding:0 32px; height:60px; display:flex; align-items:center; gap:24px; }
+  .top b { font-size:18px; letter-spacing:.3px; }
+  .top .demo { background:#ff1721; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; }
+  .top nav { margin-left:auto; display:flex; gap:20px; font-size:14px; opacity:.9; }
+  .wrap { max-width:1040px; margin:0 auto; padding:28px 32px 120px; display:grid; grid-template-columns:230px 1fr; gap:28px; }
+  aside h3 { font-size:12px; text-transform:uppercase; letter-spacing:.6px; color:#5f6577; margin:0 0 10px; }
+  aside a { display:block; padding:8px 12px; border-radius:8px; color:#1a1a2e; text-decoration:none; font-size:14.5px; margin-bottom:2px; }
+  aside a.on { background:#fff; color:#00008f; font-weight:700; box-shadow:0 0 0 1px #e3e5ee; }
+  aside .note { margin-top:22px; font-size:13px; color:#5f6577; line-height:1.5; background:#fff; padding:12px; border-radius:10px; box-shadow:0 0 0 1px #e3e5ee; }
+  aside .note a { display:inline; padding:0; color:#00008f; }
+  main { background:#fff; border-radius:14px; padding:30px 36px; box-shadow:0 0 0 1px #e3e5ee; }
+  .seg { font-size:13px; letter-spacing:.6px; color:#5f6577; text-transform:uppercase; }
+  h1 { font-family:Georgia,"Publico Headline",serif; font-size:32px; margin:6px 0 14px; }
+  .intro { font-size:15px; color:#333; margin-bottom:22px; }
+  label { display:block; font-weight:600; margin:18px 0 6px; font-size:15px; }
+  .in { border:1px solid #c9ccd8; border-radius:4px; height:42px; width:100%; max-width:560px; padding:0 12px; font:inherit; background:#fafafa; }
+  .ex { font-size:13px; color:#5f6577; margin-top:4px; }
+  .file { border:1.5px dashed #c9ccd8; border-radius:6px; max-width:560px; padding:28px; text-align:center; color:#5f6577; font-size:14px; }
+  .actions { margin-top:26px; display:flex; gap:14px; }
+  .btn { border:none; padding:11px 22px; font-weight:700; letter-spacing:.6px; font-size:13px; border-radius:4px; }
+  .btn.p { background:#e8e9ef; color:#5f6577; } .btn.s { background:none; color:#00008f; }
+  .callout { margin:0 0 20px; padding:12px 16px; border-left:4px solid #00008f; background:#eef0fb; border-radius:6px; font-size:14.5px; max-width:560px; }
+</style>
+</head>
+<body>
+  <div class="top"><b>Broker portal</b><span class="demo">DEMO HOST PAGE</span>
+    <nav><span>Portfolio</span><span>Policy servicing</span><span>Claims</span><span>Documents</span></nav></div>
+  <div class="wrap">
+    <aside>
+      <h3>Policy servicing</h3>
+      <a href="/demo/?page=motor_suspension" data-page="motor_suspension">Application for suspension</a>
+      <a href="/demo/?page=change_intermediary" data-page="change_intermediary">Change of intermediary</a>
+      <a href="/demo/?page=home" data-page="home">Portal home (no form)</a>
+      <div class="note">This page stands in for the Angular portal. The assistant is the
+        <code>&lt;axa-broker-assistant&gt;</code> web component, bottom right.<br/><br/>
+        Agent-to-agent mode: <a href="/demo/agent.html">open the agent console</a>.<br/>Standalone chat: <a href="/">open</a>.</div>
+    </aside>
+    <main id="form"></main>
+  </div>
+
+  <script src="/widget/axa-broker-assistant.js"></script>
+  <script>
+    const forms = {
+      motor_suspension: { title: 'Application for suspension', intro: 'Please enter the contract number and attach the document showing the cancellation of the licence plate so that your application can be processed.',
+        fields: [['Contract N°', 'Bv. 622382121'], ['Date of suspension', 'DD/MM/JJJJ'], ['Bank account number', ''], ['Notice of deletion', 'file']] },
+      change_intermediary: { title: 'Request to change intermediary', intro: 'Please complete the requested fields and attach the message regarding the change of intermediary so that it can be processed quickly. Please do not include any other changes here.',
+        fields: [['Contract N°', 'Bv. 622382121, 730123456'], ['Producer No.', 'Bv.1055500'], ['Notice of change of intermediary', 'file']] }
+    };
+    const page = new URLSearchParams(location.search).get('page') || 'motor_suspension';
+    document.querySelectorAll('aside a[data-page]').forEach(a => a.classList.toggle('on', a.dataset.page === page));
+    const f = forms[page];
+    const main = document.getElementById('form');
+    main.innerHTML = f ? `<div class="seg">BOAR Private Individuals &amp; BOAR Professionals</div><h1>${f.title}</h1>
+      <div class="callout">Tip: you can also complete this form by chatting with the assistant (bottom right).</div>
+      <div class="intro">${f.intro}</div>
+      ${f.fields.map(([l, ex]) => `<label>${l}</label>${ex === 'file' ? '<div class="file">Drag your document here or select it<br/><small>Allowed format: PDF, JPEG/JPG, PNG, DOC(X); Max. 10 MB</small></div>' : `<input class="in" disabled/>${ex ? `<div class="ex">${ex}</div>` : ''}`}`).join('')}
+      <div class="actions"><button class="btn s">CANCEL</button><button class="btn p">TO CONFIRM</button></div>`
+      : `<h1>Welcome back, Jan</h1><div class="intro">Ask the assistant for any policy servicing request; it will find the right form for you.</div>`;
+
+    const bot = document.createElement('axa-broker-assistant');
+    bot.setAttribute('producer-number', '1055500');
+    bot.setAttribute('broker-name', 'Jan');
+    if (new URLSearchParams(location.search).has('open')) bot.setAttribute('open', '');
+    document.body.appendChild(bot);
+    bot.addEventListener('request-submitted', e => console.log('[host] request submitted', e.detail));
+  </script>
+</body>
+</html>

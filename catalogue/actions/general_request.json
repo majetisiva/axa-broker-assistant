@@ -1,0 +1,413 @@
+{
+  "id": "general_request",
+  "order": 9,
+  "version": "0.1.0",
+  "title": "Other policy servicing request",
+  "segment": "All segments",
+  "lineOfBusiness": "Any",
+  "portalRoute": null,
+  "mock": true,
+  "fallback": true,
+  "summary": "For requests without a dedicated webform: the assistant gathers the usual information and routes it to a handler by mail (non-STP).",
+  "intent": {
+    "keywords": [
+      "address change",
+      "change address",
+      "change of address",
+      "new address",
+      "moved",
+      "cancel",
+      "cancellation",
+      "terminate",
+      "termination",
+      "add driver",
+      "add a driver",
+      "change coverage",
+      "coverage",
+      "increase",
+      "decrease",
+      "add cover",
+      "remove cover",
+      "change bank",
+      "change iban",
+      "payment method",
+      "domiciliation",
+      "direct debit",
+      "other request",
+      "changement d'adresse",
+      "nouvelle adresse",
+      "déménagé",
+      "déménagement",
+      "résilier",
+      "résiliation",
+      "ajouter un conducteur",
+      "modifier les garanties",
+      "changer de compte",
+      "autre demande",
+      "adreswijziging",
+      "adres wijzigen",
+      "nieuw adres",
+      "verhuisd",
+      "verhuizing",
+      "opzeggen",
+      "opzegging",
+      "bestuurder toevoegen",
+      "waarborgen wijzigen",
+      "rekeningnummer wijzigen",
+      "domiciliëring",
+      "andere aanvraag"
+    ],
+    "examples": [
+      "The client moved, please update the address on 622382121",
+      "Cancel the home policy at renewal"
+    ]
+  },
+  "fields": [
+    {
+      "id": "contractNumber",
+      "label": "Contract N°",
+      "type": "contractNumber",
+      "required": true,
+      "prompt": "Which contract is this about?",
+      "help": "9-digit AXA contract number",
+      "spoken": "contract {v}",
+      "ask": [
+        "Which contract is this about?",
+        "What's the contract number?"
+      ],
+      "reask": "I still need the 9-digit contract number."
+    },
+    {
+      "id": "requestCategory",
+      "label": "Type of request",
+      "type": "enum",
+      "required": true,
+      "options": [
+        {
+          "value": "address_change",
+          "label": "Address change",
+          "keywords": [
+            "address",
+            "moved",
+            "adres",
+            "adresse",
+            "déménag",
+            "verhuis"
+          ]
+        },
+        {
+          "value": "cancellation",
+          "label": "Cancellation / termination",
+          "keywords": [
+            "cancel",
+            "terminate",
+            "termination",
+            "opzeg",
+            "résili",
+            "résiliation",
+            "opzegging",
+            "stopzet"
+          ]
+        },
+        {
+          "value": "coverage_change",
+          "label": "Coverage change",
+          "keywords": [
+            "coverage",
+            "cover",
+            "driver",
+            "increase",
+            "decrease",
+            "waarborg",
+            "garantie",
+            "conducteur",
+            "bestuurder",
+            "couverture",
+            "dekking"
+          ]
+        },
+        {
+          "value": "payment_change",
+          "label": "Payment / bank details",
+          "keywords": [
+            "bank",
+            "iban",
+            "payment",
+            "domiciliation",
+            "direct debit",
+            "bancaire",
+            "paiement",
+            "compte",
+            "rekening",
+            "betaling",
+            "domiciliëring"
+          ]
+        },
+        {
+          "value": "other",
+          "label": "Other",
+          "keywords": [
+            "other",
+            "autre",
+            "iets anders"
+          ]
+        }
+      ],
+      "prompt": "What type of request is it?",
+      "spoken": "request type \"{v}\"",
+      "ask": [
+        "What kind of change is it: an address change, cancellation, coverage change, payment details, or something else?"
+      ],
+      "reask": "Could you tell me which type it is: address change, cancellation, coverage change, payment details or other?"
+    },
+    {
+      "id": "description",
+      "label": "Description of the request",
+      "type": "text",
+      "required": true,
+      "minLength": 10,
+      "prompt": "Describe the change you need in a sentence or two (for example, the new address or the cover to add).",
+      "help": "Free text that will be passed to the handler as-is.",
+      "spoken": "your description",
+      "ask": [
+        "Could you describe the change in a sentence or two?",
+        "What exactly should change? A short description is enough."
+      ],
+      "reask": "A short description of the change would help the handler. What should be done?"
+    },
+    {
+      "id": "effectiveDate",
+      "label": "Effective date",
+      "type": "date",
+      "required": false,
+      "requiredWhen": {
+        "field": "requestCategory",
+        "in": [
+          "cancellation",
+          "coverage_change",
+          "address_change"
+        ]
+      },
+      "prompt": "From which date should this take effect? (DD/MM/YYYY)",
+      "spoken": "effective date {v}",
+      "ask": [
+        "From which date should this take effect?",
+        "When should the change apply?"
+      ],
+      "reask": "I still need the effective date (DD/MM/YYYY)."
+    },
+    {
+      "id": "newIban",
+      "label": "New bank account (IBAN)",
+      "type": "iban",
+      "required": false,
+      "requiredWhen": {
+        "field": "requestCategory",
+        "in": [
+          "payment_change"
+        ]
+      },
+      "prompt": "What is the new IBAN?",
+      "spoken": "new IBAN {v}",
+      "ask": [
+        "What's the new IBAN?"
+      ],
+      "reask": "I still need the new IBAN."
+    },
+    {
+      "id": "supportingDocument",
+      "label": "Supporting document",
+      "type": "file",
+      "required": false,
+      "requiredWhen": {
+        "field": "requestCategory",
+        "in": [
+          "cancellation"
+        ]
+      },
+      "accept": [
+        "pdf",
+        "jpeg",
+        "jpg",
+        "png",
+        "doc",
+        "docx"
+      ],
+      "maxSizeMb": 10,
+      "prompt": "Please attach the signed cancellation letter from the policyholder.",
+      "help": "PDF, JPEG/JPG, PNG or DOC(X), max 10 MB",
+      "spoken": "the document ({v})",
+      "ask": [
+        "For a cancellation we need the policyholder's signed letter. Could you attach it?"
+      ],
+      "reask": "I still need the signed cancellation letter. Attach it with the paperclip."
+    }
+  ],
+  "rules": [],
+  "submission": {
+    "mode": "mail",
+    "endpoint": "/policy-servicing/mail-request",
+    "method": "POST",
+    "mailbox": "policy.servicing@axa.be (mock)"
+  },
+  "intro": [
+    "I can take care of that. There's no dedicated form for it, so I'll pass it to a handler by mail.",
+    "Sure. I'll collect the details and send them to a handler, since there's no straight-through form for this."
+  ],
+  "i18n": {
+    "fr": {
+      "title": "Autre demande de gestion de contrat",
+      "summary": "Pour les demandes sans formulaire dédié : l'assistant rassemble les informations habituelles et les transmet par mail à un gestionnaire (non-STP).",
+      "intro": [
+        "Je m'en occupe. Il n'y a pas de formulaire dédié, je vais donc transmettre la demande par mail à un gestionnaire.",
+        "Bien sûr. Je rassemble les détails et je les envoie à un gestionnaire, car il n'existe pas de formulaire automatique pour ceci."
+      ],
+      "fields": {
+        "contractNumber": {
+          "label": "N° de contrat",
+          "prompt": "De quel contrat s'agit-il ?",
+          "help": "Numéro de contrat AXA à 9 chiffres",
+          "spoken": "contrat {v}",
+          "ask": [
+            "De quel contrat s'agit-il ?",
+            "Quel est le numéro de contrat ?"
+          ],
+          "reask": "Il me manque encore le numéro de contrat à 9 chiffres."
+        },
+        "requestCategory": {
+          "label": "Type de demande",
+          "prompt": "De quel type de demande s'agit-il ?",
+          "spoken": "type de demande « {v} »",
+          "ask": [
+            "De quel type de modification s'agit-il : changement d'adresse, résiliation, modification de garanties, données de paiement ou autre chose ?"
+          ],
+          "reask": "Pourriez-vous me dire de quel type il s'agit : changement d'adresse, résiliation, modification de garanties, données de paiement ou autre ?",
+          "options": {
+            "address_change": "Changement d'adresse",
+            "cancellation": "Résiliation",
+            "coverage_change": "Modification de garanties",
+            "payment_change": "Paiement / données bancaires",
+            "other": "Autre"
+          }
+        },
+        "description": {
+          "label": "Description de la demande",
+          "prompt": "Décrivez la modification souhaitée en une ou deux phrases (par exemple la nouvelle adresse ou la garantie à ajouter).",
+          "help": "Texte libre transmis tel quel au gestionnaire.",
+          "spoken": "votre description",
+          "ask": [
+            "Pourriez-vous décrire la modification en une ou deux phrases ?",
+            "Que faut-il modifier exactement ? Une courte description suffit."
+          ],
+          "reask": "Une courte description aiderait le gestionnaire. Que faut-il faire ?"
+        },
+        "effectiveDate": {
+          "label": "Date d'effet",
+          "prompt": "À partir de quelle date cela doit-il prendre effet ? (JJ/MM/AAAA)",
+          "spoken": "date d'effet {v}",
+          "ask": [
+            "À partir de quelle date cela doit-il prendre effet ?",
+            "Quand la modification doit-elle s'appliquer ?"
+          ],
+          "reask": "Il me manque encore la date d'effet (JJ/MM/AAAA)."
+        },
+        "newIban": {
+          "label": "Nouveau compte bancaire (IBAN)",
+          "prompt": "Quel est le nouvel IBAN ?",
+          "spoken": "nouvel IBAN {v}",
+          "ask": [
+            "Quel est le nouvel IBAN ?"
+          ],
+          "reask": "Il me manque encore le nouvel IBAN."
+        },
+        "supportingDocument": {
+          "label": "Pièce justificative",
+          "prompt": "Veuillez joindre la lettre de résiliation signée par le preneur d'assurance.",
+          "help": "PDF, JPEG/JPG, PNG ou DOC(X), 10 Mo max.",
+          "spoken": "le document ({v})",
+          "ask": [
+            "Pour une résiliation, nous avons besoin de la lettre signée du preneur d'assurance. Pourriez-vous la joindre ?"
+          ],
+          "reask": "Il me manque encore la lettre de résiliation signée. Joignez-la avec le trombone."
+        }
+      }
+    },
+    "nl": {
+      "title": "Andere aanvraag voor polisbeheer",
+      "summary": "Voor aanvragen zonder eigen formulier: de assistent verzamelt de gebruikelijke gegevens en stuurt ze per mail naar een dossierbeheerder (niet-STP).",
+      "intro": [
+        "Ik regel het. Er is geen apart formulier voor, dus ik stuur het per mail naar een dossierbeheerder.",
+        "Natuurlijk. Ik verzamel de gegevens en stuur ze naar een dossierbeheerder, want hiervoor bestaat geen automatisch formulier."
+      ],
+      "fields": {
+        "contractNumber": {
+          "label": "Contractnr.",
+          "prompt": "Over welk contract gaat het?",
+          "help": "AXA-contractnummer van 9 cijfers",
+          "spoken": "contract {v}",
+          "ask": [
+            "Over welk contract gaat het?",
+            "Wat is het contractnummer?"
+          ],
+          "reask": "Ik heb nog het contractnummer van 9 cijfers nodig."
+        },
+        "requestCategory": {
+          "label": "Soort aanvraag",
+          "prompt": "Welk soort aanvraag is het?",
+          "spoken": "soort aanvraag \"{v}\"",
+          "ask": [
+            "Welk soort wijziging is het: adreswijziging, opzegging, wijziging van waarborgen, betaalgegevens of iets anders?"
+          ],
+          "reask": "Kunt u zeggen welk soort het is: adreswijziging, opzegging, wijziging van waarborgen, betaalgegevens of andere?",
+          "options": {
+            "address_change": "Adreswijziging",
+            "cancellation": "Opzegging",
+            "coverage_change": "Wijziging van waarborgen",
+            "payment_change": "Betaling / bankgegevens",
+            "other": "Andere"
+          }
+        },
+        "description": {
+          "label": "Omschrijving van de aanvraag",
+          "prompt": "Beschrijf de gewenste wijziging in een of twee zinnen (bijvoorbeeld het nieuwe adres of de waarborg die erbij moet).",
+          "help": "Vrije tekst die ongewijzigd naar de dossierbeheerder gaat.",
+          "spoken": "uw omschrijving",
+          "ask": [
+            "Kunt u de wijziging in een of twee zinnen beschrijven?",
+            "Wat moet er precies veranderen? Een korte omschrijving volstaat."
+          ],
+          "reask": "Een korte omschrijving helpt de dossierbeheerder. Wat moet er gebeuren?"
+        },
+        "effectiveDate": {
+          "label": "Ingangsdatum",
+          "prompt": "Vanaf welke datum moet dit ingaan? (DD/MM/JJJJ)",
+          "spoken": "ingangsdatum {v}",
+          "ask": [
+            "Vanaf welke datum moet dit ingaan?",
+            "Wanneer moet de wijziging gelden?"
+          ],
+          "reask": "Ik heb nog de ingangsdatum nodig (DD/MM/JJJJ)."
+        },
+        "newIban": {
+          "label": "Nieuwe bankrekening (IBAN)",
+          "prompt": "Wat is het nieuwe IBAN?",
+          "spoken": "nieuw IBAN {v}",
+          "ask": [
+            "Wat is het nieuwe IBAN?"
+          ],
+          "reask": "Ik heb nog het nieuwe IBAN nodig."
+        },
+        "supportingDocument": {
+          "label": "Bewijsstuk",
+          "prompt": "Voeg de door de verzekeringnemer ondertekende opzeggingsbrief toe.",
+          "help": "PDF, JPEG/JPG, PNG of DOC(X), max. 10 MB",
+          "spoken": "het document ({v})",
+          "ask": [
+            "Voor een opzegging hebben we de ondertekende brief van de verzekeringnemer nodig. Kunt u die toevoegen?"
+          ],
+          "reask": "Ik heb nog de ondertekende opzeggingsbrief nodig. Voeg die toe met de paperclip."
+        }
+      }
+    }
+  }
+}

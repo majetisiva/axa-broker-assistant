@@ -1,0 +1,8 @@
+{
+  "/assistant": {
+    "target": "http://localhost:8080",
+    "pathRewrite": { "^/assistant": "" },
+    "secure": false,
+    "changeOrigin": true
+  }
+}

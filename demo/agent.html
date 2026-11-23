@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent-to-agent console – Broker assistant</title>
+<style>
+  body { margin:0; font-family:"Source Sans Pro","Segoe UI",system-ui,sans-serif; background:#f4f5f9; color:#1a1a2e; }
+  .top { background:#00008f; color:#fff; padding:14px 28px; display:flex; align-items:center; gap:16px; }
+  .top b { font-size:18px; } .top a { color:#fff; margin-left:auto; font-size:14px; }
+  .wrap { display:grid; grid-template-columns:300px minmax(0,1fr); gap:20px; padding:20px 28px; }
+  .card { background:#fff; border-radius:12px; box-shadow:0 0 0 1px #e3e5ee; padding:16px; }
+  h3 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:#5f6577; }
+  .sc { display:block; width:100%; text-align:left; border:1.5px solid #e3e5ee; background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; font:inherit; cursor:pointer; }
+  .sc.on { border-color:#00008f; box-shadow:0 0 0 2px #eef0fb; }
+  .sc b { display:block; font-size:14.5px; } .sc span { font-size:12.5px; color:#5f6577; }
+  .ctl { display:flex; gap:8px; margin-bottom:14px; }
+  .ctl button { border:none; background:#00008f; color:#fff; padding:9px 16px; border-radius:8px; font-weight:700; cursor:pointer; }
+  .ctl button.sec { background:#fff; color:#00008f; box-shadow:inset 0 0 0 1.5px #00008f; }
+  .ctl button:disabled { opacity:.4; }
+  .turn { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; margin-bottom:14px; }
+  .turn h4 { margin:0 0 6px; font-size:12.5px; color:#5f6577; }
+  .turn .say { grid-column:1/-1; font-size:14px; background:#eef0fb; border-radius:8px; padding:8px 12px; }
+  pre { margin:0; background:#0f1030; color:#d7dbff; padding:12px; border-radius:10px; font:12px/1.5 ui-monospace,Menlo,Consolas,monospace; overflow:auto; max-height:340px; }
+  .pill { display:inline-block; font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; background:#eef0fb; color:#00008f; margin-left:6px; }
+</style>
+</head>
+<body>
+  <div class="top"><b>Agent-to-agent console</b><span>A broker-side AI agent calls <code>POST /api/agent/requests</code></span><a href="/">← Broker chat demo</a></div>
+  <div class="wrap">
+    <div class="card"><h3>Scenarios</h3><div id="list"></div></div>
+    <div class="card">
+      <div class="ctl"><button id="next">Run next step</button><button id="all" class="sec">Run all</button><button id="reset" class="sec">Reset</button></div>
+      <div id="log"></div>
+    </div>
+  </div>
+<script>
+const SCENARIOS = [
+  { name: 'Complete input · Suspension', desc: 'All values in one message, then the document', steps: [
+    { say: 'Broker agent sends a natural-language request with all values', body: { text: 'Suspend motor contract 498765432 from 01/12/2026, refund to BE68 5390 0754 7034', context: { producerNumber: '1055500' } } },
+    { say: 'Agent uploads the licence plate cancellation and passes the file id', upload: 'notice-of-deletion.pdf', body: { fields: { noticeOfDeletion: '$file' } } },
+    { say: 'Agent confirms', body: { confirm: true } } ] },
+  { name: 'Missing input · Change of intermediary', desc: 'Structured fields, the assistant reports what is missing', steps: [
+    { say: 'Agent picks the action and sends one field', body: { action: 'change_intermediary', fields: { contractNumbers: ['622382121', '730123456'] }, context: { producerNumber: '1055500' } } },
+    { say: 'Agent sends the missing document', upload: 'mandate.pdf', body: { fields: { noticeOfChange: '$file' } } },
+    { say: 'Agent confirms', body: { confirm: true } } ] },
+  { name: 'Conditional input · Address change (non-STP)', desc: 'Effective date becomes required for this category', steps: [
+    { say: 'Agent describes a request without a dedicated webform', body: { text: 'The client moved, please update the address on contract 730123456 to Rue Royale 12, 1000 Brussels' } },
+    { say: 'Agent supplies the conditional field', body: { fields: { effectiveDate: '01/12/2026' } } },
+    { say: 'Agent confirms → mail created for a handler', body: { confirm: true } } ] },
+  { name: 'Ambiguous input · "cancel"', desc: 'Assistant asks which action is meant', steps: [
+    { say: 'Agent sends an ambiguous instruction', body: { text: 'cancel contract 611122233' } },
+    { say: 'Agent chooses from the returned options', body: { action: 'general_request' } },
+    { say: 'Agent supplies date and document', upload: 'cancellation-letter.pdf', body: { fields: { effectiveDate: '31/12/2026', supportingDocument: '$file' } } },
+    { say: 'Agent confirms', body: { confirm: true } } ] },
+  { name: 'Back-end rejection · correct without restarting', desc: 'Java API rejects a home contract for suspension', steps: [
+    { say: 'Agent requests suspension of a home contract', body: { text: 'suspend contract 730123456 from 20/11/2026 IBAN BE68 5390 0754 7034', context: {} } },
+    { say: 'Agent adds the document', upload: 'plate.pdf', body: { fields: { noticeOfDeletion: '$file' } } },
+    { say: 'Agent confirms; back end refuses the contract', body: { confirm: true } },
+    { say: 'Agent corrects only the contract number', body: { fields: { contractNumber: '498765432' } } },
+    { say: 'Agent confirms again', body: { confirm: true } } ] }
+];
+let current = 0, step = 0, sessionId = null;
+const list = document.getElementById('list'), log = document.getElementById('log');
+const renderList = () => {
+  list.innerHTML = SCENARIOS.map((s, i) => `<button class="sc ${i === current ? 'on' : ''}" data-i="${i}"><b>${s.name}</b><span>${s.desc}</span></button>`).join('');
+  list.querySelectorAll('.sc').forEach(b => b.onclick = () => { current = +b.dataset.i; reset(); });
+};
+const reset = () => { step = 0; sessionId = null; log.innerHTML = ''; renderList(); document.getElementById('next').disabled = false; };
+async function uploadFake(name) {
+  const pdf = btoa('%PDF-1.4\n% demo document generated by the agent console\n%%EOF');
+  const r = await fetch('/api/uploads', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, mime: 'application/pdf', dataBase64: pdf }) });
+  return (await r.json()).fileId;
+}
+async function runStep() {
+  const sc = SCENARIOS[current]; const st = sc.steps[step];
+  if (!st) return false;
+  let body = JSON.parse(JSON.stringify(st.body));
+  if (st.upload && JSON.stringify(body).includes('$file')) {
+    const fid = await uploadFake(st.upload);
+    body = JSON.parse(JSON.stringify(body).replaceAll('$file', fid));
+  }
+  if (sessionId) body.sessionId = sessionId;
+  const res = await fetch('/api/agent/requests', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const json = await res.json();
+  sessionId = json.sessionId;
+  const el = document.createElement('div'); el.className = 'turn';
+  const { request, ...short } = json;
+  el.innerHTML = `<div class="say">${step + 1}. ${st.say} <span class="pill">${json.status}</span> <span class="pill">next: ${json.nextStep}</span></div>
+    <div><h4>Request → assistant</h4><pre></pre></div><div><h4>Response ← assistant</h4><pre></pre></div>
+    <div style="grid-column:1/-1"><h4>Request JSON (${request?.status || '–'})</h4><pre></pre></div>`;
+  const pres = el.querySelectorAll('pre');
+  pres[0].textContent = JSON.stringify(body, null, 2); pres[1].textContent = JSON.stringify(short, null, 2); pres[2].textContent = JSON.stringify(request, null, 2);
+  log.appendChild(el); el.scrollIntoView({ block: 'nearest' });
+  step++;
+  if (step >= sc.steps.length) document.getElementById('next').disabled = true;
+  return true;
+}
+document.getElementById('next').onclick = runStep;
+document.getElementById('all').onclick = async () => { while (await runStep()) {} };
+document.getElementById('reset').onclick = reset;
+renderList();
+</script>
+</body>
+</html>

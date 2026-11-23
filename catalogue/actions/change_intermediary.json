@@ -1,0 +1,217 @@
+{
+  "id": "change_intermediary",
+  "order": 2,
+  "version": "1.0.0",
+  "title": "Request to change intermediary",
+  "segment": "BOAR Private Individuals & BOAR Professionals",
+  "lineOfBusiness": "P&C",
+  "portalRoute": "bss/brokermandate",
+  "mock": false,
+  "summary": "Transfer one or more contracts to your portfolio (broker mandate / change of intermediary).",
+  "intent": {
+    "keywords": [
+      "change intermediary",
+      "change of intermediary",
+      "change broker",
+      "broker change",
+      "new broker",
+      "transfer contract",
+      "transfer the contract",
+      "transfer policy",
+      "take over",
+      "takeover",
+      "broker mandate",
+      "mandate",
+      "move contract",
+      "move policy",
+      "portfolio transfer",
+      "changement d'intermédiaire",
+      "changement de courtier",
+      "mandat",
+      "makelaarswissel",
+      "wijziging tussenpersoon",
+      "makelaarsmandaat",
+      "changer d'intermédiaire",
+      "changer de courtier",
+      "reprise de portefeuille",
+      "transfert de contrat",
+      "reprendre le contrat",
+      "dans mon portefeuille",
+      "wijziging van tussenpersoon",
+      "andere makelaar",
+      "nieuwe makelaar",
+      "overdracht",
+      "naar mijn portefeuille",
+      "contract overnemen"
+    ],
+    "examples": [
+      "I want to take over contract 622382121",
+      "Transfer policies 622382121 and 730123456 to my portfolio",
+      "Change of intermediary for a client"
+    ]
+  },
+  "fields": [
+    {
+      "id": "contractNumbers",
+      "label": "Contract N°",
+      "type": "contractNumber",
+      "multiple": true,
+      "required": true,
+      "prompt": "Which contract number(s) should move to your portfolio? You can give several, separated by commas.",
+      "help": "9-digit AXA contract number, e.g. 622382121, 730123456",
+      "spoken": "contract {v}",
+      "ask": [
+        "Which contract(s) should move to your portfolio? Several are fine, separated by commas.",
+        "Which contract numbers are we transferring?"
+      ],
+      "reask": "I still need the contract number(s), 9 digits each, e.g. 622382121, 730123456.",
+      "spokenPlural": "contracts {v}"
+    },
+    {
+      "id": "producerNumber",
+      "label": "Producer No.",
+      "type": "producerNumber",
+      "required": true,
+      "prompt": "What is your producer number?",
+      "help": "Your AXA producer number, e.g. 1055500",
+      "spoken": "producer number {v}",
+      "ask": [
+        "What's your producer number?",
+        "Which producer number should the contracts go to?"
+      ],
+      "reask": "I still need your producer number, for example 1055500."
+    },
+    {
+      "id": "noticeOfChange",
+      "label": "Notice of change of intermediary",
+      "type": "file",
+      "required": true,
+      "accept": [
+        "pdf",
+        "jpeg",
+        "jpg",
+        "png",
+        "doc",
+        "docx"
+      ],
+      "maxSizeMb": 10,
+      "prompt": "Please attach the signed notice of change of intermediary.",
+      "help": "PDF, JPEG/JPG, PNG or DOC(X), max 10 MB, filename without < > : \" / \\ | ? *",
+      "spoken": "the signed notice ({v})",
+      "ask": [
+        "Could you attach the signed notice of change of intermediary?",
+        "Please attach the client's signed notice of change of intermediary."
+      ],
+      "reask": "The last thing I need is the signed notice of change. Attach it with the paperclip or drop it into the chat."
+    }
+  ],
+  "rules": [
+    "Heads-up: this request only covers the change of intermediary. Any other change to the contract needs a separate request."
+  ],
+  "submission": {
+    "mode": "stp",
+    "endpoint": "/policy-servicing/broker-mandate",
+    "method": "POST",
+    "downstreamTask": "GD"
+  },
+  "intro": [
+    "Sure, let's move that business into your portfolio.",
+    "Happy to help with the change of intermediary."
+  ],
+  "i18n": {
+    "fr": {
+      "title": "Demande de changement d'intermédiaire",
+      "summary": "Transférer un ou plusieurs contrats dans votre portefeuille (mandat de courtage / changement d'intermédiaire).",
+      "intro": [
+        "Bien sûr, transférons ces contrats dans votre portefeuille.",
+        "Avec plaisir pour ce changement d'intermédiaire."
+      ],
+      "rules": [
+        "À noter : cette demande ne couvre que le changement d'intermédiaire. Toute autre modification du contrat nécessite une demande séparée."
+      ],
+      "fields": {
+        "contractNumbers": {
+          "label": "N° de contrat",
+          "prompt": "Quel(s) numéro(s) de contrat faut-il transférer dans votre portefeuille ? Vous pouvez en donner plusieurs, séparés par des virgules.",
+          "help": "Numéro de contrat AXA à 9 chiffres, par ex. 622382121, 730123456",
+          "spoken": "contrat {v}",
+          "spokenPlural": "contrats {v}",
+          "ask": [
+            "Quel(s) contrat(s) faut-il transférer dans votre portefeuille ? Plusieurs, c'est possible, séparés par des virgules.",
+            "Quels numéros de contrat transférons-nous ?"
+          ],
+          "reask": "Il me manque encore le ou les numéros de contrat, 9 chiffres chacun, par ex. 622382121, 730123456."
+        },
+        "producerNumber": {
+          "label": "N° de producteur",
+          "prompt": "Quel est votre numéro de producteur ?",
+          "help": "Votre numéro de producteur AXA, par ex. 1055500",
+          "spoken": "numéro de producteur {v}",
+          "ask": [
+            "Quel est votre numéro de producteur ?",
+            "Vers quel numéro de producteur les contrats doivent-ils aller ?"
+          ],
+          "reask": "Il me manque encore votre numéro de producteur, par ex. 1055500."
+        },
+        "noticeOfChange": {
+          "label": "Avis de changement d'intermédiaire",
+          "prompt": "Veuillez joindre l'avis de changement d'intermédiaire signé.",
+          "help": "PDF, JPEG/JPG, PNG ou DOC(X), 10 Mo max., nom de fichier sans < > : \" / \\ | ? *",
+          "spoken": "l'avis signé ({v})",
+          "ask": [
+            "Pourriez-vous joindre l'avis de changement d'intermédiaire signé ?",
+            "Veuillez joindre l'avis de changement d'intermédiaire signé par le client."
+          ],
+          "reask": "Il ne me manque plus que l'avis de changement signé. Joignez-le avec le trombone ou glissez-le dans le chat."
+        }
+      }
+    },
+    "nl": {
+      "title": "Aanvraag tot wijziging van tussenpersoon",
+      "summary": "Een of meer contracten naar uw portefeuille overzetten (makelaarsmandaat / wijziging van tussenpersoon).",
+      "intro": [
+        "Natuurlijk, we zetten die contracten over naar uw portefeuille.",
+        "Graag help ik u met de wijziging van tussenpersoon."
+      ],
+      "rules": [
+        "Let op: deze aanvraag dekt alleen de wijziging van tussenpersoon. Voor elke andere wijziging aan het contract is een aparte aanvraag nodig."
+      ],
+      "fields": {
+        "contractNumbers": {
+          "label": "Contractnr.",
+          "prompt": "Welk(e) contractnummer(s) moeten naar uw portefeuille? U kunt er meerdere geven, gescheiden door komma's.",
+          "help": "AXA-contractnummer van 9 cijfers, bv. 622382121, 730123456",
+          "spoken": "contract {v}",
+          "spokenPlural": "contracten {v}",
+          "ask": [
+            "Welk(e) contract(en) moeten naar uw portefeuille? Meerdere mag, gescheiden door komma's.",
+            "Welke contractnummers zetten we over?"
+          ],
+          "reask": "Ik heb nog het contractnummer of de contractnummers nodig, telkens 9 cijfers, bv. 622382121, 730123456."
+        },
+        "producerNumber": {
+          "label": "Producentennr.",
+          "prompt": "Wat is uw producentennummer?",
+          "help": "Uw AXA-producentennummer, bv. 1055500",
+          "spoken": "producentennummer {v}",
+          "ask": [
+            "Wat is uw producentennummer?",
+            "Naar welk producentennummer moeten de contracten?"
+          ],
+          "reask": "Ik heb nog uw producentennummer nodig, bv. 1055500."
+        },
+        "noticeOfChange": {
+          "label": "Bericht van wijziging van tussenpersoon",
+          "prompt": "Voeg het ondertekende bericht van wijziging van tussenpersoon toe.",
+          "help": "PDF, JPEG/JPG, PNG of DOC(X), max. 10 MB, bestandsnaam zonder < > : \" / \\ | ? *",
+          "spoken": "het ondertekende bericht ({v})",
+          "ask": [
+            "Kunt u het ondertekende bericht van wijziging van tussenpersoon toevoegen?",
+            "Voeg het door de klant ondertekende bericht van wijziging van tussenpersoon toe."
+          ],
+          "reask": "Het laatste wat ik nodig heb, is het ondertekende bericht van wijziging. Voeg het toe met de paperclip of sleep het in de chat."
+        }
+      }
+    }
+  }
+}

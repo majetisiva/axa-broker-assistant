@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AXA broker assistant</title>
+<style>
+  html, body { height:100%; margin:0; }
+  body { background:radial-gradient(1200px 600px at 10% -10%, #e8eaff 0%, transparent 60%), #f4f5f9;
+         display:flex; align-items:center; justify-content:center; }
+  .shell { width:min(1180px, calc(100vw - 32px)); height:calc(100vh - 32px); }
+  @media (max-width:520px) { .shell { width:100vw; height:100vh; } }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <axa-broker-assistant variant="page"></axa-broker-assistant>
+  </div>
+  <script src="/widget/axa-broker-assistant.js"></script>
+</body>
+</html>

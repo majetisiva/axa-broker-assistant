@@ -1,0 +1,128 @@
+{
+  "name": "AXA Belgium broker portal actions",
+  "version": "1.0.0",
+  "fieldFormats": {
+    "contractNumber": {
+      "pattern": "^\\d{9}$",
+      "description": "9 digits",
+      "i18n": {
+        "fr": "9 chiffres",
+        "nl": "9 cijfers"
+      }
+    },
+    "producerNumber": {
+      "pattern": "^\\d{6,8}$",
+      "description": "6 to 8 digits",
+      "i18n": {
+        "fr": "6 à 8 chiffres",
+        "nl": "6 tot 8 cijfers"
+      }
+    },
+    "ibanCountries": [
+      "BE",
+      "NL",
+      "LU",
+      "FR",
+      "DE"
+    ]
+  },
+  "ambiguousTerms": [
+    {
+      "terms": [
+        "cancel",
+        "stop the contract",
+        "stop the policy",
+        "end the contract",
+        "annuler",
+        "stopzetten",
+        "arrêter le contrat",
+        "mettre fin au contrat",
+        "annuleren",
+        "beëindigen",
+        "stopzetten van het contract"
+      ],
+      "candidates": [
+        "motor_suspension",
+        "general_request"
+      ],
+      "question": "Do you want to suspend the contract (e.g. after the licence plate was cancelled), or terminate it for good?",
+      "i18n": {
+        "fr": {
+          "question": "Voulez-vous suspendre le contrat (par ex. après la radiation de la plaque) ou le résilier définitivement ?"
+        },
+        "nl": {
+          "question": "Wilt u het contract schorsen (bv. nadat de nummerplaat geschrapt werd) of definitief opzeggen?"
+        }
+      }
+    },
+    {
+      "terms": [
+        "transfer",
+        "move",
+        "transférer",
+        "overzetten",
+        "overdragen"
+      ],
+      "candidates": [
+        "change_intermediary",
+        "general_request"
+      ],
+      "question": "Do you want to transfer the contract to your portfolio (change of intermediary), or something else?",
+      "i18n": {
+        "fr": {
+          "question": "Voulez-vous transférer le contrat dans votre portefeuille (changement d'intermédiaire) ou s'agit-il d'autre chose ?"
+        },
+        "nl": {
+          "question": "Wilt u het contract naar uw portefeuille overzetten (wijziging van tussenpersoon) of gaat het om iets anders?"
+        }
+      }
+    }
+  ],
+  "unsupported": [
+    {
+      "terms": [
+        "claim",
+        "declare a claim",
+        "sinistre",
+        "schadegeval",
+        "déclarer un sinistre",
+        "déclaration de sinistre",
+        "schade aangeven",
+        "schadeaangifte"
+      ],
+      "message": "Claims declarations are not handled by this assistant yet. Please use the claims section of the AXA portal.",
+      "i18n": {
+        "fr": {
+          "message": "Les déclarations de sinistre ne sont pas encore prises en charge par cet assistant. Veuillez utiliser la section sinistres du portail AXA."
+        },
+        "nl": {
+          "message": "Schadeaangiftes worden nog niet door deze assistent behandeld. Gebruik het schadeluik van het AXA-portaal."
+        }
+      }
+    },
+    {
+      "terms": [
+        "new quote",
+        "quotation",
+        "offerte",
+        "devis",
+        "new contract",
+        "new policy",
+        "nouveau contrat",
+        "nouvelle police",
+        "tarification",
+        "nieuw contract",
+        "nieuwe polis"
+      ],
+      "message": "New business quotes are out of scope for this assistant. Please use the quotation tools in the portal.",
+      "i18n": {
+        "fr": {
+          "message": "Les offres pour de nouvelles affaires sortent du cadre de cet assistant. Veuillez utiliser les outils de tarification du portail."
+        },
+        "nl": {
+          "message": "Offertes voor nieuwe zaken vallen buiten het bereik van deze assistent. Gebruik de tarificatietools in het portaal."
+        }
+      }
+    }
+  ]
+}
