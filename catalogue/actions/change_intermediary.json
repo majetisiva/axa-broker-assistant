@@ -1,13 +1,17 @@
 {
   "id": "change_intermediary",
   "order": 2,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Request to change intermediary",
   "segment": "BOAR Private Individuals & BOAR Professionals",
   "lineOfBusiness": "P&C",
   "portalRoute": "bss/brokermandate",
   "mock": false,
   "summary": "Transfer one or more contracts to your portfolio (broker mandate / change of intermediary).",
+  "session": [
+    "cifNumber",
+    "difNumber"
+  ],
   "intent": {
     "keywords": [
       "change intermediary",
@@ -73,13 +77,23 @@
       "type": "producerNumber",
       "required": true,
       "prompt": "What is your producer number?",
-      "help": "Your AXA producer number, e.g. 1055500",
+      "help": "The new broker's producer number: exactly 7 digits, e.g. 1055500",
       "spoken": "producer number {v}",
       "ask": [
         "What's your producer number?",
         "Which producer number should the contracts go to?"
       ],
-      "reask": "I still need your producer number, for example 1055500."
+      "reask": "I still need your producer number, for example 1055500.",
+      "checks": [
+        {
+          "pattern": "^\\d{7}$",
+          "message": {
+            "en": "\"{value}\" doesn't look right: the new broker's producer number has exactly 7 digits, like 1055500. Could you check it?",
+            "fr": "« {value} » ne semble pas correct : le numéro de producteur du nouvel intermédiaire compte exactement 7 chiffres, par ex. 1055500. Pourriez-vous vérifier ?",
+            "nl": "\"{value}\" lijkt niet te kloppen: het producentennummer van de nieuwe tussenpersoon heeft precies 7 cijfers, bv. 1055500. Kunt u het nakijken?"
+          }
+        }
+      ]
     },
     {
       "id": "noticeOfChange",
@@ -96,13 +110,14 @@
       ],
       "maxSizeMb": 10,
       "prompt": "Please attach the signed notice of change of intermediary.",
-      "help": "PDF, JPEG/JPG, PNG or DOC(X), max 10 MB, filename without < > : \" / \\ | ? *",
+      "help": "One document: PDF, JPEG/JPG, PNG or DOC(X), 1 KB to 10 MB, filename without < > : \" / \\ | ? *",
       "spoken": "the signed notice ({v})",
       "ask": [
         "Could you attach the signed notice of change of intermediary?",
         "Please attach the client's signed notice of change of intermediary."
       ],
-      "reask": "The last thing I need is the signed notice of change. Attach it with the paperclip or drop it into the chat."
+      "reask": "The last thing I need is the signed notice of change. Attach it with the paperclip or drop it into the chat.",
+      "minSizeKb": 1
     }
   ],
   "rules": [
@@ -145,7 +160,7 @@
         "producerNumber": {
           "label": "N° de producteur",
           "prompt": "Quel est votre numéro de producteur ?",
-          "help": "Votre numéro de producteur AXA, par ex. 1055500",
+          "help": "Numéro de producteur du nouvel intermédiaire : exactement 7 chiffres, par ex. 1055500",
           "spoken": "numéro de producteur {v}",
           "ask": [
             "Quel est votre numéro de producteur ?",
@@ -156,7 +171,7 @@
         "noticeOfChange": {
           "label": "Avis de changement d'intermédiaire",
           "prompt": "Veuillez joindre l'avis de changement d'intermédiaire signé.",
-          "help": "PDF, JPEG/JPG, PNG ou DOC(X), 10 Mo max., nom de fichier sans < > : \" / \\ | ? *",
+          "help": "Un seul document : PDF, JPEG/JPG, PNG ou DOC(X), de 1 Ko à 10 Mo, nom de fichier sans < > : \" / \\ | ? *",
           "spoken": "l'avis signé ({v})",
           "ask": [
             "Pourriez-vous joindre l'avis de changement d'intermédiaire signé ?",
@@ -192,7 +207,7 @@
         "producerNumber": {
           "label": "Producentennr.",
           "prompt": "Wat is uw producentennummer?",
-          "help": "Uw AXA-producentennummer, bv. 1055500",
+          "help": "Producentennummer van de nieuwe tussenpersoon: precies 7 cijfers, bv. 1055500",
           "spoken": "producentennummer {v}",
           "ask": [
             "Wat is uw producentennummer?",
@@ -203,7 +218,7 @@
         "noticeOfChange": {
           "label": "Bericht van wijziging van tussenpersoon",
           "prompt": "Voeg het ondertekende bericht van wijziging van tussenpersoon toe.",
-          "help": "PDF, JPEG/JPG, PNG of DOC(X), max. 10 MB, bestandsnaam zonder < > : \" / \\ | ? *",
+          "help": "Eén document: PDF, JPEG/JPG, PNG of DOC(X), 1 KB tot 10 MB, bestandsnaam zonder < > : \" / \\ | ? *",
           "spoken": "het ondertekende bericht ({v})",
           "ask": [
             "Kunt u het ondertekende bericht van wijziging van tussenpersoon toevoegen?",

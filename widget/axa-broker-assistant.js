@@ -9,6 +9,9 @@
  *   api-base        Base URL of the assistant API (default: same origin)
  *   producer-number Logged-in broker's producer number (reused, never asked twice)
  *   broker-name     Shown in the greeting
+ *   cif-number      CIF number of the portal session (the webforms need it to submit)
+ *   dif-number      Distributor (DIF) number of the portal session
+ *   contract-number Contract the page was opened for (e.g. a BEP request), offered as a prefill
  *   action-hint     Catalogue id of the webform page the broker is on
  *   variant         "floating" (default, launcher bubble) or "inline" (fills its container)
  *   open            Present → panel starts open
@@ -408,6 +411,9 @@
           context: {
             producerNumber: this.getAttribute('producer-number') || undefined,
             brokerName: this.getAttribute('broker-name') || undefined,
+            cifNumber: this.getAttribute('cif-number') || undefined,
+            difNumber: this.getAttribute('dif-number') || undefined,
+            contractNumber: this.getAttribute('contract-number') || undefined,
             actionId: this.getAttribute('action-hint') || undefined
           }
         });

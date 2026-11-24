@@ -14,16 +14,30 @@ Set `BACKEND_BASE_URL` to the API gateway. Each catalogue action names its endpo
   "action": { "id": "motor_suspension", "version": "1.0.0", "portalRoute": "bss/suspension" },
   "channel": "broker-chat",
   "language": "fr",
-  "broker": { "producerNumber": "1055500" },
+  "broker": { "producerNumber": "1055500", "cifNumber": "00012345", "difNumber": "0012345" },
   "fields": {
-    "contractNumber": "498765432",
-    "suspensionDate": "01/12/2026",
+    "contractNumber": "622382121",
+    "suspensionDate": "2026-11-20",
     "bankAccount": "BE68 5390 0754 7034",
     "noticeOfDeletion": { "fileId": "F-9c1e2a7b3d", "name": "plate.pdf", "size": 48211, "mime": "application/pdf" }
   },
   "documents": [ { "fieldId": "noticeOfDeletion", "name": "plate.pdf", "mime": "application/pdf", "contentBase64": "..." } ]
 }
 ```
+
+`broker.cifNumber` and `broker.difNumber` come from the portal session (the webforms require them). The assistant does not
+send a request when one is missing.
+
+Dates are `DD/MM/YYYY` in the request JSON, except fields marked `"submitAs": "iso-date"` in the catalogue
+(the suspension date), which the submitter sends as `YYYY-MM-DD`, like the webform.
+
+| Webform | Endpoint (placeholder) | Fields |
+|---|---|---|
+| Suspension | `/policy-servicing/suspension` | `contractNumber`, `suspensionDate`, `bankAccount` (optional), `noticeOfDeletion` |
+| BrokerMandate | `/policy-servicing/broker-mandate` | `contractNumbers[]`, `producerNumber`, `noticeOfChange` |
+| Renon | `/policy-servicing/cancellation` | `contractNumber`, `cancellationLetter` |
+| Domiciliation with fractionment | `/policy-servicing/direct-debit` | `contractNumber`, `bankAccount`, `holderIsPolicyholder` (yes/no), `sepaMandate`, `changeSplit` (yes/no), `newSplit` (annual/semiannual/quarterly/monthly, when `changeSplit` = yes) |
+| CopieContract | `/policy-servicing/contract-copy` | `contractNumber` |
 
 `language` (`en`, `fr` or `nl`) is the broker's conversation language, also sent as the `Accept-Language` header.
 Error messages in 422 responses should be in that language: the assistant shows them to the broker as they are.

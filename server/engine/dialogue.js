@@ -2,7 +2,7 @@
 // Conversation engine: identify the action, collect fields, accept corrections,
 // confirm, submit. Entirely driven by the catalogue; nothing here is form-specific.
 const nlu = require('./nlu');
-const { makeValidators, validateField } = require('./validators');
+const { makeValidators, validateField, pick } = require('./validators');
 const { isRequired, activeFields } = require('./catalogue');
 const { requestId } = require('./store');
 const llm = require('./llm');
@@ -41,7 +41,15 @@ class DialogueEngine {
       clarify: null,
       buffer: null,
       draftId: null,
-      profile: { producerNumber: context.producerNumber || null, brokerName: context.brokerName || null },
+      profile: {
+        producerNumber: context.producerNumber || null, brokerName: context.brokerName || null,
+        // Portal session identifiers the webforms require before submission
+        cifNumber: context.cifNumber || null, difNumber: context.difNumber || null,
+        distributors: Array.isArray(context.distributors) ? context.distributors.filter(d => d && d.difNumber) : [],
+        // Contract number handed over by the portal page (e.g. a BEP request), offered as a prefill
+        contractNumber: context.contractNumber || null
+      },
+      skipped: {},
       // Conversation language: the portal's language until the broker's first message decides it, then fixed.
       lang: LANGS.includes(context.language) ? context.language : 'en',
       langLocked: false,
@@ -128,6 +136,26 @@ class DialogueEngine {
       return out.done();
     }
 
+    // The portal session has several distributors: the broker picks one before the summary
+    if (session.pendingFieldId === '_distributor' && !hasNewData && text) {
+      const said = nlu.norm(text);
+      const d = session.profile.distributors.find(x => said.includes(String(x.difNumber)) || (x.name && said.includes(x.name.toLowerCase())));
+      if (d) { session.profile.difNumber = d.difNumber; out.lead(t(L, 'distributorSet', { v: this.distributorLabel(d) }), true); }
+      else if (!meta) { out.say(t(L, 'distributorRetry')); out.quick(this.distributorChips(session)); return out.done(); }
+      this.reportProgress(session, action, out);
+      return out.done();
+    }
+
+    // Optional field asked once ("askIfMissing"): the broker may skip it
+    const pendingField = action.fields.find(x => x.id === session.pendingFieldId);
+    if (pendingField?.askIfMissing && !isRequired(pendingField, session.values) && !hasNewData && text && nlu.wantsSkip(text)) {
+      session.skipped[pendingField.id] = true;
+      delete session.invalid[pendingField.id];
+      out.lead(t(L, 'skipped', { label: pendingField.label.toLowerCase() }), true);
+      this.reportProgress(session, action, out);
+      return out.done();
+    }
+
     // "change producer number" without a value: point at that field
     const ref = text ? nlu.referencedField(text, action) : null;
     if (ref && !hasNewData && nlu.wantsChange(text)) {
@@ -173,6 +201,7 @@ class DialogueEngine {
       chosen = cands.find(id => said.includes(this.catalogue.get(id).title.toLowerCase()) || said.includes(title(id).toLowerCase())) || null;
       if (!chosen) {
         if (/(suspend|suspension|plate|pause|schors|plaque|nummerplaat)/.test(said) && cands.includes('motor_suspension')) chosen = 'motor_suspension';
+        else if (/(terminat|for good|permanent|résili|definiti|définiti|opzeg|renon|cancellation letter)/.test(said) && cands.includes('contract_cancellation')) chosen = 'contract_cancellation';
         else if (/(terminat|for good|permanent|résili|definiti|définiti|opzeg|something else|other|autre chose|iets anders)/.test(said) && cands.includes('general_request')) chosen = 'general_request';
         else if (/(portfolio|intermediary|broker|mandate|portefeuille|intermédiaire|courtier|tussenpersoon|makelaar)/.test(said) && cands.includes('change_intermediary')) chosen = 'change_intermediary';
       }
@@ -249,6 +278,7 @@ class DialogueEngine {
       const v = validateField(this.validators, reuse, session.profile.producerNumber, L);
       if (v.ok) { session.values[reuse.id] = v.value; session.provenance[reuse.id] = 'reused_from_profile'; }
     }
+    const prefill = action.fields.find(f => f.type === 'contractNumber' && !f.multiple);
     const buffered = session.buffer; session.buffer = null;
     const earlier = [buffered?.text, input.action ? null : text].filter(Boolean).join('\n');
     if (earlier || buffered?.fileId) {
@@ -261,6 +291,11 @@ class DialogueEngine {
     if (input.fileId || input.fields) {
       const r = this.apply(session, action, { fileId: input.fileId, fields: input.fields });
       this.reportResult(r, out, L);
+    }
+    // Contract number handed over by the portal page, when the broker didn't give one
+    if (prefill && session.profile.contractNumber && session.values[prefill.id] === undefined && !session.invalid[prefill.id]) {
+      const v = validateField(this.validators, prefill, session.profile.contractNumber, L);
+      if (v.ok) { session.values[prefill.id] = v.value; session.provenance[prefill.id] = 'prefilled_from_portal'; }
     }
     this.reportProgress(session, action, out);
     return true;
@@ -305,7 +340,9 @@ class DialogueEngine {
     // Enum fields: look for an option keyword
     for (const f of action.fields.filter(x => x.type === 'enum' && !used.has(x.id))) {
       if (!text) continue;
-      const shouldTry = session.values[f.id] === undefined || ref?.id === f.id || pending?.id === f.id;
+      // Yes/no questions are only answered when asked (or named), never guessed from other text
+      const shouldTry = f.answerOnly ? (ref?.id === f.id || pending?.id === f.id)
+        : session.values[f.id] === undefined || ref?.id === f.id || pending?.id === f.id;
       if (!shouldTry) continue;
       const r = this.validators.enum(text, f, session.lang);
       if (r.ok) { assignments.push([f, text, 'broker']); used.add(f.id); }
@@ -387,7 +424,14 @@ class DialogueEngine {
     if (changed.length) {
       out.lead(t(L, 'updated', { list: joinList(changed.map(c => t(L, 'was', { v: this.spoken(c.field, c.value), prev: this.display(c.field, c.prev) })), L) }), true);
     }
+    // Intro and acknowledgement come before any error, so the error reads as the follow-up question
+    if (errors.length) { const l = out.takeLead(); if (l.text) out.say(l.text); }
     for (const e of errors) { out.say(e.error, 'error'); out.erred(e.field.id); }
+    // An option may carry a business note, e.g. "monthly split requires a direct debit"
+    for (const s of set) {
+      const note = s.field.type === 'enum' && s.field.options.find(o => o.value === s.value)?.notice;
+      if (note) out.say(pick(note, L), 'notice');
+    }
   }
 
   // Asks for the next missing field. Wording varies with what just happened,
@@ -403,6 +447,7 @@ class DialogueEngine {
       session.pendingFieldId = next.id;
       out.expect(next);
       if (next.type === 'enum') out.quick(next.options.map(o => ({ label: o.label, text: o.label })));
+      else if (!isRequired(next, session.values)) out.quick([{ label: t(L, 'skipChip'), text: 'skip' }]);
 
       if (summaryOnly) {
         const have = activeFields(action, session.values).filter(f => session.values[f.id] !== undefined && !session.invalid[f.id]);
@@ -424,19 +469,51 @@ class DialogueEngine {
       out.say([lead.text, q].filter(Boolean).join(' '), 'question');
       return;
     }
+    // Portal session identifiers (CIF / DIF) the form needs before it can be sent
+    const gap = this.sessionGap(session, action);
+    if (gap === 'chooseDistributor') {
+      session.status = STATUS.COLLECTING;
+      session.pendingFieldId = '_distributor';
+      out.say([lead.text, t(L, 'chooseDistributor')].filter(Boolean).join(' '), 'question');
+      out.quick(this.distributorChips(session));
+      return;
+    }
     session.status = STATUS.CONFIRMING;
     session.pendingFieldId = null;
     const closers = t(L, 'closers');
     out.say([lead.text, closers[session.turns % closers.length]].filter(Boolean).join(' '), 'question');
     out.summary(activeFields(action, session.values).filter(f => session.values[f.id] !== undefined)
-      .map(f => ({ label: f.label, value: this.display(f, session.values[f.id]), reused: session.provenance[f.id] === 'reused_from_profile' })));
+      .map(f => ({ label: f.label, value: this.display(f, session.values[f.id]), reused: ['reused_from_profile', 'prefilled_from_portal'].includes(session.provenance[f.id]) })));
+    if (gap) {
+      out.say(t(L, gap === 'cifNumber' ? 'sessionNoCif' : 'sessionNoDif'), 'error');
+      out.quick([{ label: t(L, 'chipEdit'), text: 'edit' }, { label: t(L, 'chipCancel'), text: 'cancel this request' }]);
+      return;
+    }
     out.quick([{ label: t(L, 'chipConfirm'), text: 'confirm', primary: true }, { label: t(L, 'chipEdit'), text: 'edit' }, { label: t(L, 'chipCancel'), text: 'cancel this request' }]);
+  }
+
+  // Which portal session identifier is missing for this action? null when all are there.
+  sessionGap(session, action) {
+    const need = action.session || [];
+    if (need.includes('cifNumber') && !session.profile.cifNumber) return 'cifNumber';
+    if (need.includes('difNumber') && !session.profile.difNumber) {
+      return session.profile.distributors.length && session.mode !== 'agent' ? 'chooseDistributor' : 'difNumber';
+    }
+    return null;
+  }
+
+  distributorLabel(d) { return d.name ? `${d.name} (${d.difNumber})` : String(d.difNumber); }
+
+  distributorChips(session) {
+    return session.profile.distributors.map(d => ({ label: this.distributorLabel(d), text: String(d.difNumber) }));
   }
 
   // ---------- step 3: submission ----------
 
   async submit(session, action, out) {
     const L = session.lang;
+    const gap = this.sessionGap(session, action);
+    if (gap) { this.reportProgress(session, action, out); return out.done(); }
     session.status = STATUS.SUBMITTING;
     const payload = this.buildPayload(session, action, 'submitted');
     let result;
@@ -497,7 +574,11 @@ class DialogueEngine {
       action: { id: base.id, version: base.version, title: base.title, portalRoute: base.portalRoute, lineOfBusiness: base.lineOfBusiness, mock: !!base.mock },
       channel: session.mode === 'agent' ? 'agent-to-agent' : 'broker-chat',
       language: session.lang,
-      broker: { producerNumber: session.values.producerNumber || session.profile.producerNumber || null },
+      broker: {
+        producerNumber: session.values.producerNumber || session.profile.producerNumber || null,
+        cifNumber: session.profile.cifNumber || null,
+        difNumber: session.profile.difNumber || null
+      },
       fields,
       provenance: Object.fromEntries(Object.keys(fields).map(k => [k, session.provenance[k] || 'broker'])),
       completeness: { required: required.length, provided: required.length - missing.length, missing, invalid: Object.keys(session.invalid) },
@@ -512,12 +593,18 @@ class DialogueEngine {
   // ---------- helpers ----------
 
   clearRequest(session) {
-    Object.assign(session, { status: STATUS.IDLE, actionId: null, values: {}, provenance: {}, invalid: {}, pendingFieldId: null, clarify: null, buffer: null, draftId: null });
+    Object.assign(session, { status: STATUS.IDLE, actionId: null, values: {}, provenance: {}, invalid: {}, skipped: {}, pendingFieldId: null, clarify: null, buffer: null, draftId: null });
   }
 
+  // Fields still to ask: required ones, plus optional "askIfMissing" ones the broker hasn't skipped (chat only).
   missingOrAll(session, action, all) {
-    const fields = action.fields.filter(f => isRequired(f, session.values));
-    return all ? activeFields(action, session.values) : fields.filter(f => session.values[f.id] === undefined || session.invalid[f.id]);
+    if (all) return activeFields(action, session.values);
+    const skipped = session.skipped || {};
+    return action.fields.filter(f => {
+      const open = session.values[f.id] === undefined || session.invalid[f.id];
+      if (isRequired(f, session.values)) return open;
+      return f.askIfMissing && session.mode !== 'agent' && !skipped[f.id] && open;
+    });
   }
 
 

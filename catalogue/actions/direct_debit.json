@@ -1,0 +1,469 @@
+{
+  "id": "direct_debit",
+  "order": 4,
+  "version": "1.0.0",
+  "title": "SEPA mandate activation",
+  "segment": "BOAR Professionals",
+  "lineOfBusiness": "P&C",
+  "portalRoute": "bss/domiciliation",
+  "mock": false,
+  "summary": "Activate a SEPA direct debit (domiciliation) on a contract and, if needed, change the premium split.",
+  "session": [
+    "cifNumber",
+    "difNumber"
+  ],
+  "intent": {
+    "keywords": [
+      "direct debit",
+      "domiciliation",
+      "sepa",
+      "sepa mandate",
+      "sepa direct debit",
+      "activate direct debit",
+      "premium split",
+      "payment frequency",
+      "split payment",
+      "pay monthly",
+      "monthly payment",
+      "fractionment",
+      "mandat sepa",
+      "activation mandat sepa",
+      "activer la domiciliation",
+      "domicilier",
+      "fractionnement",
+      "changement de fractionnement",
+      "paiement mensuel",
+      "payer mensuellement",
+      "domiciliëring",
+      "sepa-mandaat",
+      "domiciliëring activeren",
+      "premiesplitsing",
+      "splitsing",
+      "betalingsfrequentie",
+      "maandelijks betalen",
+      "gespreide betaling"
+    ],
+    "examples": [
+      "Activate the direct debit on 622382121 with BE68 5390 0754 7034",
+      "The client wants to pay monthly by SEPA mandate"
+    ]
+  },
+  "fields": [
+    {
+      "id": "contractNumber",
+      "label": "Contract number",
+      "type": "contractNumber",
+      "required": true,
+      "prompt": "Which contract should the direct debit be activated on?",
+      "help": "9-digit AXA contract number, e.g. 622382121",
+      "spoken": "contract {v}",
+      "ask": [
+        "Which contract should the direct debit be activated on?",
+        "What's the contract number?"
+      ],
+      "reask": "I still need the contract number: the 9 digits on the policy, for example 622382121."
+    },
+    {
+      "id": "bankAccount",
+      "label": "Bank account number",
+      "type": "iban",
+      "required": true,
+      "countries": [
+        "BE"
+      ],
+      "prompt": "Which Belgian bank account (IBAN) should be debited?",
+      "help": "Belgian IBAN, 16 characters starting with BE, e.g. BE68 5390 0754 7034",
+      "spoken": "IBAN {v}",
+      "ask": [
+        "Which Belgian account (IBAN) should the premiums be debited from?",
+        "What's the IBAN to debit? It must be a Belgian account."
+      ],
+      "reask": "I still need the Belgian IBAN to debit, for example BE68 5390 0754 7034."
+    },
+    {
+      "id": "holderIsPolicyholder",
+      "label": "Account holder is the policyholder",
+      "type": "enum",
+      "required": true,
+      "answerOnly": true,
+      "options": [
+        {
+          "value": "yes",
+          "label": "Yes",
+          "keywords": [
+            "yes",
+            "yep",
+            "yeah",
+            "correct",
+            "oui",
+            "ja",
+            "inderdaad"
+          ]
+        },
+        {
+          "value": "no",
+          "label": "No",
+          "keywords": [
+            "no",
+            "nope",
+            "non",
+            "nee"
+          ],
+          "notice": {
+            "en": "Note: this form is meant for accounts held by the policyholder. I'll pass your answer on, but AXA may not be able to process a mandate for another account holder.",
+            "fr": "À noter : ce formulaire est prévu pour un compte du preneur d'assurance. Je transmets votre réponse, mais AXA pourrait ne pas traiter un mandat pour un autre titulaire.",
+            "nl": "Let op: dit formulier is bedoeld voor een rekening van de verzekeringnemer. Ik geef uw antwoord door, maar AXA kan een mandaat voor een andere rekeninghouder mogelijk niet verwerken."
+          }
+        }
+      ],
+      "prompt": "Is the account holder the same as the policyholder?",
+      "help": "This form is for accounts held by the policyholder.",
+      "spoken": "account holder is the policyholder: {v}",
+      "ask": [
+        "Is the account holder the same as the policyholder?",
+        "Does the account belong to the policyholder?"
+      ],
+      "reask": "Just to check: is the account holder the policyholder? Yes or no?"
+    },
+    {
+      "id": "sepaMandate",
+      "label": "SEPA mandate",
+      "type": "file",
+      "required": true,
+      "accept": [
+        "pdf",
+        "jpeg",
+        "jpg",
+        "png",
+        "doc",
+        "docx"
+      ],
+      "minSizeKb": 1,
+      "maxSizeMb": 10,
+      "prompt": "Please attach the SEPA mandate, completed and signed.",
+      "help": "One document: PDF, JPEG/JPG, PNG or DOC(X), 1 KB to 10 MB, filename without < > : \" / \\ | ? *",
+      "spoken": "the SEPA mandate ({v})",
+      "ask": [
+        "Could you attach the completed and signed SEPA mandate? Use the paperclip below.",
+        "Please attach the signed SEPA mandate."
+      ],
+      "reask": "I still need the signed SEPA mandate. Attach it with the paperclip or drop it into the chat."
+    },
+    {
+      "id": "changeSplit",
+      "label": "Change of premium split",
+      "type": "enum",
+      "required": true,
+      "answerOnly": true,
+      "options": [
+        {
+          "value": "yes",
+          "label": "Yes",
+          "keywords": [
+            "yes",
+            "yep",
+            "yeah",
+            "oui",
+            "ja",
+            "change it"
+          ]
+        },
+        {
+          "value": "no",
+          "label": "No",
+          "keywords": [
+            "no",
+            "nope",
+            "non",
+            "nee",
+            "keep",
+            "unchanged",
+            "inchangé",
+            "ongewijzigd"
+          ]
+        }
+      ],
+      "prompt": "Should the premium split (payment frequency) change as well?",
+      "help": "The new split takes effect at the main or interim renewal date.",
+      "spoken": "change of premium split: {v}",
+      "ask": [
+        "Should the premium split (payment frequency) change as well?",
+        "Do you also want to change how often the premium is paid?"
+      ],
+      "reask": "Should the payment frequency change too? Yes or no?"
+    },
+    {
+      "id": "newSplit",
+      "label": "New premium split",
+      "type": "enum",
+      "required": false,
+      "requiredWhen": {
+        "field": "changeSplit",
+        "equals": "yes"
+      },
+      "options": [
+        {
+          "value": "annual",
+          "label": "Annual",
+          "keywords": [
+            "annual",
+            "yearly",
+            "once a year",
+            "annuel",
+            "jaarlijks"
+          ]
+        },
+        {
+          "value": "semiannual",
+          "label": "Semiannual",
+          "keywords": [
+            "semiannual",
+            "semi-annual",
+            "half-yearly",
+            "half yearly",
+            "twice a year",
+            "semestriel",
+            "halfjaarlijks"
+          ]
+        },
+        {
+          "value": "quarterly",
+          "label": "Quarterly",
+          "keywords": [
+            "quarter",
+            "quarterly",
+            "trimestriel",
+            "trimestre",
+            "driemaandelijks",
+            "per kwartaal"
+          ]
+        },
+        {
+          "value": "monthly",
+          "label": "Monthly",
+          "keywords": [
+            "monthly",
+            "every month",
+            "per month",
+            "mensuel",
+            "mensuellement",
+            "par mois",
+            "maandelijks",
+            "per maand"
+          ],
+          "notice": {
+            "en": "Good to know: a monthly split requires a direct debit, which this request activates.",
+            "fr": "Bon à savoir : un fractionnement mensuel nécessite une domiciliation, que cette demande active.",
+            "nl": "Goed om te weten: een maandelijkse splitsing vereist een domiciliëring, die met deze aanvraag geactiveerd wordt."
+          }
+        }
+      ],
+      "prompt": "Which new premium split: annual, semiannual, quarterly or monthly?",
+      "help": "Takes effect at the main or interim renewal date. Monthly requires a direct debit.",
+      "spoken": "new split {v}",
+      "ask": [
+        "Which new split would you like: annual, semiannual, quarterly or monthly?"
+      ],
+      "reask": "Which split should it be: annual, semiannual, quarterly or monthly?"
+    }
+  ],
+  "rules": [
+    "Heads-up: this request only covers activating the direct debit and, if needed, the premium split. Other changes won't be processed."
+  ],
+  "submission": {
+    "mode": "stp",
+    "endpoint": "/policy-servicing/direct-debit",
+    "method": "POST",
+    "downstreamTask": "GD"
+  },
+  "intro": [
+    "Sure, let's activate the direct debit.",
+    "Happy to set up the SEPA direct debit."
+  ],
+  "i18n": {
+    "fr": {
+      "title": "Activation mandat SEPA",
+      "summary": "Activer une domiciliation SEPA sur un contrat et, si besoin, changer le fractionnement de la prime.",
+      "intro": [
+        "Bien sûr, activons la domiciliation.",
+        "Avec plaisir pour la mise en place de la domiciliation SEPA."
+      ],
+      "rules": [
+        "À noter : cette demande ne couvre que l'activation de la domiciliation et, éventuellement, le changement de fractionnement. Les autres demandes ne seront pas traitées."
+      ],
+      "fields": {
+        "contractNumber": {
+          "label": "N° de contrat",
+          "prompt": "Sur quel contrat faut-il activer la domiciliation ?",
+          "help": "Numéro de contrat AXA à 9 chiffres, par ex. 622382121",
+          "spoken": "contrat {v}",
+          "ask": [
+            "Sur quel contrat faut-il activer la domiciliation ?",
+            "Quel est le numéro de contrat ?"
+          ],
+          "reask": "Il me manque encore le numéro de contrat : les 9 chiffres figurant sur la police, par ex. 622382121."
+        },
+        "bankAccount": {
+          "label": "N° de compte bancaire",
+          "prompt": "Quel compte bancaire belge (IBAN) faut-il débiter ?",
+          "help": "IBAN belge, 16 caractères commençant par BE, par ex. BE68 5390 0754 7034",
+          "spoken": "IBAN {v}",
+          "ask": [
+            "Sur quel compte belge (IBAN) faut-il prélever les primes ?",
+            "Quel IBAN faut-il débiter ? Il doit s'agir d'un compte belge."
+          ],
+          "reask": "Il me manque encore l'IBAN belge à débiter, par ex. BE68 5390 0754 7034."
+        },
+        "holderIsPolicyholder": {
+          "label": "Titulaire = preneur d'assurance",
+          "prompt": "Est-ce que le titulaire est égal au preneur d'assurance ?",
+          "help": "Ce formulaire concerne les comptes du preneur d'assurance.",
+          "spoken": "titulaire = preneur d'assurance : {v}",
+          "ask": [
+            "Est-ce que le titulaire du compte est égal au preneur d'assurance ?",
+            "Le compte appartient-il au preneur d'assurance ?"
+          ],
+          "reask": "Pour vérifier : le titulaire du compte est-il le preneur d'assurance ? Oui ou non ?",
+          "options": {
+            "yes": "Oui",
+            "no": "Non"
+          }
+        },
+        "sepaMandate": {
+          "label": "Mandat SEPA",
+          "prompt": "Veuillez joindre le mandat SEPA, complété et signé.",
+          "help": "Un seul document : PDF, JPEG/JPG, PNG ou DOC(X), de 1 Ko à 10 Mo, nom de fichier sans < > : \" / \\ | ? *",
+          "spoken": "le mandat SEPA ({v})",
+          "ask": [
+            "Pourriez-vous joindre le mandat SEPA complété et signé ? Utilisez le trombone ci-dessous.",
+            "Veuillez joindre le mandat SEPA signé."
+          ],
+          "reask": "Il me manque encore le mandat SEPA signé. Joignez-le avec le trombone ou glissez-le dans le chat."
+        },
+        "changeSplit": {
+          "label": "Changement de fractionnement",
+          "prompt": "Faut-il aussi changer le fractionnement de la prime ?",
+          "help": "Le nouveau fractionnement prend effet à l'échéance principale ou intermédiaire.",
+          "spoken": "changement de fractionnement : {v}",
+          "ask": [
+            "Faut-il aussi changer le fractionnement de la prime ?",
+            "Souhaitez-vous également modifier la fréquence de paiement de la prime ?"
+          ],
+          "reask": "Faut-il aussi changer le fractionnement ? Oui ou non ?",
+          "options": {
+            "yes": "Oui",
+            "no": "Non"
+          }
+        },
+        "newSplit": {
+          "label": "Nouveau fractionnement",
+          "prompt": "Quel nouveau fractionnement : annuel, semestriel, trimestriel ou mensuel ?",
+          "help": "Prend effet à l'échéance principale ou intermédiaire. Le mensuel nécessite une domiciliation.",
+          "spoken": "nouveau fractionnement {v}",
+          "ask": [
+            "Quel nouveau fractionnement souhaitez-vous : annuel, semestriel, trimestriel ou mensuel ?"
+          ],
+          "reask": "Quel fractionnement faut-il : annuel, semestriel, trimestriel ou mensuel ?",
+          "options": {
+            "annual": "Annuel",
+            "semiannual": "Semestriel",
+            "quarterly": "Trimestriel",
+            "monthly": "Mensuel"
+          }
+        }
+      }
+    },
+    "nl": {
+      "title": "Activering SEPA-mandaat",
+      "summary": "Een SEPA-domiciliëring op een contract activeren en, indien nodig, de premiesplitsing wijzigen.",
+      "intro": [
+        "Natuurlijk, we activeren de domiciliëring.",
+        "Graag zet ik de SEPA-domiciliëring op."
+      ],
+      "rules": [
+        "Let op: deze aanvraag dekt alleen de activering van de domiciliëring en eventueel de premiesplitsing. Andere aanvragen worden niet behandeld."
+      ],
+      "fields": {
+        "contractNumber": {
+          "label": "Contractnr.",
+          "prompt": "Op welk contract moet de domiciliëring geactiveerd worden?",
+          "help": "AXA-contractnummer van 9 cijfers, bv. 622382121",
+          "spoken": "contract {v}",
+          "ask": [
+            "Op welk contract moet de domiciliëring geactiveerd worden?",
+            "Wat is het contractnummer?"
+          ],
+          "reask": "Ik heb nog het contractnummer nodig: de 9 cijfers op de polis, bv. 622382121."
+        },
+        "bankAccount": {
+          "label": "Rekeningnummer",
+          "prompt": "Welke Belgische bankrekening (IBAN) moet gedebiteerd worden?",
+          "help": "Belgisch IBAN, 16 tekens beginnend met BE, bv. BE68 5390 0754 7034",
+          "spoken": "IBAN {v}",
+          "ask": [
+            "Van welke Belgische rekening (IBAN) moeten de premies gedebiteerd worden?",
+            "Welk IBAN moet gedebiteerd worden? Het moet een Belgische rekening zijn."
+          ],
+          "reask": "Ik heb nog het Belgische IBAN nodig, bv. BE68 5390 0754 7034."
+        },
+        "holderIsPolicyholder": {
+          "label": "Rekeninghouder = verzekeringnemer",
+          "prompt": "Is de rekeninghouder dezelfde als de verzekeringnemer?",
+          "help": "Dit formulier is bedoeld voor rekeningen van de verzekeringnemer.",
+          "spoken": "rekeninghouder = verzekeringnemer: {v}",
+          "ask": [
+            "Is de rekeninghouder dezelfde als de verzekeringnemer?",
+            "Is de rekening van de verzekeringnemer?"
+          ],
+          "reask": "Even nagaan: is de rekeninghouder de verzekeringnemer? Ja of nee?",
+          "options": {
+            "yes": "Ja",
+            "no": "Nee"
+          }
+        },
+        "sepaMandate": {
+          "label": "SEPA-mandaat",
+          "prompt": "Voeg het ingevulde en ondertekende SEPA-mandaat toe.",
+          "help": "Eén document: PDF, JPEG/JPG, PNG of DOC(X), 1 KB tot 10 MB, bestandsnaam zonder < > : \" / \\ | ? *",
+          "spoken": "het SEPA-mandaat ({v})",
+          "ask": [
+            "Kunt u het ingevulde en ondertekende SEPA-mandaat toevoegen? Gebruik de paperclip hieronder.",
+            "Voeg het ondertekende SEPA-mandaat toe."
+          ],
+          "reask": "Ik heb nog het ondertekende SEPA-mandaat nodig. Voeg het toe met de paperclip of sleep het in de chat."
+        },
+        "changeSplit": {
+          "label": "Wijziging premiesplitsing",
+          "prompt": "Moet de premiesplitsing (betalingsfrequentie) ook gewijzigd worden?",
+          "help": "De nieuwe splitsing gaat in op de hoofd- of tussentijdse vervaldag.",
+          "spoken": "wijziging premiesplitsing: {v}",
+          "ask": [
+            "Moet de premiesplitsing (betalingsfrequentie) ook gewijzigd worden?",
+            "Wilt u ook wijzigen hoe vaak de premie betaald wordt?"
+          ],
+          "reask": "Moet de betalingsfrequentie ook wijzigen? Ja of nee?",
+          "options": {
+            "yes": "Ja",
+            "no": "Nee"
+          }
+        },
+        "newSplit": {
+          "label": "Nieuwe premiesplitsing",
+          "prompt": "Welke nieuwe splitsing: jaarlijks, halfjaarlijks, driemaandelijks of maandelijks?",
+          "help": "Gaat in op de hoofd- of tussentijdse vervaldag. Maandelijks vereist een domiciliëring.",
+          "spoken": "nieuwe splitsing {v}",
+          "ask": [
+            "Welke nieuwe splitsing wilt u: jaarlijks, halfjaarlijks, driemaandelijks of maandelijks?"
+          ],
+          "reask": "Welke splitsing moet het zijn: jaarlijks, halfjaarlijks, driemaandelijks of maandelijks?",
+          "options": {
+            "annual": "Jaarlijks",
+            "semiannual": "Halfjaarlijks",
+            "quarterly": "Driemaandelijks",
+            "monthly": "Maandelijks"
+          }
+        }
+      }
+    }
+  }
+}

@@ -20,11 +20,20 @@ function lintAction(a, file) {
     if (!KNOWN_TYPES.includes(f.type)) problems.push(`field ${f.id}: unknown type ${f.type}`);
     if (!f.prompt) problems.push(`field ${f.id}: prompt missing`);
     if (f.type === 'enum' && !(f.options || []).length) problems.push(`field ${f.id}: enum without options`);
+    for (const c of f.checks || []) {
+      if (!c.pattern && !c.notPattern) problems.push(`field ${f.id}: check needs pattern or notPattern`);
+      try { new RegExp(c.pattern || c.notPattern); } catch { problems.push(`field ${f.id}: invalid check pattern`); }
+      if (!c.message) problems.push(`field ${f.id}: check without message`);
+    }
+    if (f.maxDate && f.maxDate !== 'today') problems.push(`field ${f.id}: maxDate must be "today"`);
+    if (f.askIfMissing && f.required) problems.push(`field ${f.id}: askIfMissing is for optional fields`);
+    if (f.countries && f.type !== 'iban') problems.push(`field ${f.id}: countries only applies to iban fields`);
   }
   for (const f of a.fields || []) {
     if (f.requiredWhen && !ids.has(f.requiredWhen.field)) problems.push(`field ${f.id}: requiredWhen refers to unknown field ${f.requiredWhen.field}`);
   }
   if (!a.submission || !['stp', 'mail'].includes(a.submission.mode)) problems.push('submission.mode must be stp or mail');
+  for (const k of a.session || []) if (!['cifNumber', 'difNumber'].includes(k)) problems.push(`session: unknown identifier ${k}`);
   for (const [lang, tr] of Object.entries(a.i18n || {})) {
     if (!LANGS.includes(lang)) problems.push(`i18n: unknown language ${lang}`);
     for (const [fid, ft] of Object.entries(tr.fields || {})) {

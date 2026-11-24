@@ -1,13 +1,17 @@
 {
   "id": "motor_suspension",
   "order": 1,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Application for suspension",
   "segment": "BOAR Private Individuals & BOAR Professionals",
   "lineOfBusiness": "P&C",
   "portalRoute": "bss/suspension",
   "mock": false,
   "summary": "Suspend a motor contract after the licence plate has been cancelled (de-registered).",
+  "session": [
+    "cifNumber",
+    "difNumber"
+  ],
   "intent": {
     "keywords": [
       "suspend",
@@ -52,41 +56,57 @@
       "type": "contractNumber",
       "required": true,
       "prompt": "Which contract should be suspended?",
-      "help": "9-digit AXA contract number, e.g. 622382121",
+      "help": "9-digit motor contract number starting with 6, e.g. 622382121",
       "spoken": "contract {v}",
       "ask": [
         "Which contract would you like to suspend?",
         "What's the contract number of the vehicle?"
       ],
-      "reask": "I still need the contract number. It's the 9-digit number on the policy, for example 622382121."
+      "reask": "I still need the contract number: 9 digits starting with 6, for example 622382121.",
+      "checks": [
+        {
+          "pattern": "^6",
+          "message": {
+            "en": "Contract {value} doesn't start with 6. Suspension applies to motor contracts, whose number starts with 6 (e.g. 622382121). Could you check it?",
+            "fr": "Le contrat {value} ne commence pas par 6. La suspension concerne les contrats auto, dont le numéro commence par 6 (par ex. 622382121). Pourriez-vous vérifier ?",
+            "nl": "Contract {value} begint niet met 6. Schorsing geldt voor autocontracten, waarvan het nummer met 6 begint (bv. 622382121). Kunt u het nakijken?"
+          }
+        }
+      ]
     },
     {
       "id": "suspensionDate",
       "label": "Date of suspension",
       "type": "date",
       "required": true,
-      "prompt": "From which date should the contract be suspended? (DD/MM/YYYY)",
-      "help": "Usually the date the licence plate was cancelled. Format DD/MM/YYYY.",
+      "prompt": "From which date should the contract be suspended? Today or an earlier date (DD/MM/YYYY).",
+      "help": "Usually the date the licence plate was cancelled: today or earlier, not a future date. Format DD/MM/YYYY.",
       "spoken": "suspension date {v}",
       "ask": [
         "From which date should it be suspended?",
         "When should the suspension start?"
       ],
-      "reask": "I still need the start date of the suspension, usually the day the plate was cancelled (DD/MM/YYYY)."
+      "reask": "I still need the start date of the suspension, usually the day the plate was cancelled (DD/MM/YYYY).",
+      "maxDate": "today",
+      "submitAs": "iso-date"
     },
     {
       "id": "bankAccount",
       "label": "Bank account number",
       "type": "iban",
-      "required": true,
-      "prompt": "On which bank account (IBAN) should any premium refund be paid?",
-      "help": "IBAN, e.g. BE68 5390 0754 7034",
+      "required": false,
+      "prompt": "Should any premium refund go to a Belgian bank account? Give me the IBAN, or skip it.",
+      "help": "Optional. Belgian IBAN, 16 characters starting with BE, e.g. BE68 5390 0754 7034",
       "spoken": "IBAN {v}",
       "ask": [
-        "Where should we refund any unused premium? I'll need the IBAN.",
-        "Which bank account (IBAN) should the premium refund go to?"
+        "Where should we refund any unused premium? Give me the Belgian IBAN, or skip it if there's none.",
+        "Which Belgian bank account (IBAN) should a premium refund go to? You can also skip this."
       ],
-      "reask": "I still need the IBAN for the premium refund, for example BE68 5390 0754 7034."
+      "reask": "If there's a refund account, I need the Belgian IBAN, e.g. BE68 5390 0754 7034. Otherwise just skip it.",
+      "askIfMissing": true,
+      "countries": [
+        "BE"
+      ]
     },
     {
       "id": "noticeOfDeletion",
@@ -99,17 +119,19 @@
         "jpg",
         "png",
         "doc",
-        "docx"
+        "docx",
+        "msg"
       ],
       "maxSizeMb": 10,
       "prompt": "Please attach the document showing the cancellation of the licence plate (notice of deletion).",
-      "help": "PDF, JPEG/JPG, PNG or DOC(X), max 10 MB, filename without < > : \" / \\ | ? *",
+      "help": "One document: PDF, JPEG/JPG, PNG, DOC(X) or MSG, 1 KB to 10 MB, filename without < > : \" / \\ | ? *",
       "spoken": "the notice of deletion ({v})",
       "ask": [
         "Could you attach the licence plate cancellation document (notice of deletion)? Use the paperclip below.",
         "Please attach the notice of deletion. That's the proof the plate was cancelled."
       ],
-      "reask": "The last thing I need is the notice of deletion. You can attach it with the paperclip or drag it into the chat."
+      "reask": "The last thing I need is the notice of deletion. You can attach it with the paperclip or drag it into the chat.",
+      "minSizeKb": 1
     }
   ],
   "rules": [],
@@ -135,18 +157,18 @@
         "contractNumber": {
           "label": "N° de contrat",
           "prompt": "Quel contrat faut-il suspendre ?",
-          "help": "Numéro de contrat AXA à 9 chiffres, par ex. 622382121",
+          "help": "Numéro de contrat auto à 9 chiffres commençant par 6, par ex. 622382121",
           "spoken": "contrat {v}",
           "ask": [
             "Quel contrat souhaitez-vous suspendre ?",
             "Quel est le numéro de contrat du véhicule ?"
           ],
-          "reask": "Il me manque encore le numéro de contrat : les 9 chiffres figurant sur la police, par ex. 622382121."
+          "reask": "Il me manque encore le numéro de contrat : 9 chiffres commençant par 6, par ex. 622382121."
         },
         "suspensionDate": {
           "label": "Date de suspension",
-          "prompt": "À partir de quelle date le contrat doit-il être suspendu ? (JJ/MM/AAAA)",
-          "help": "Généralement la date de radiation de la plaque. Format JJ/MM/AAAA.",
+          "prompt": "À partir de quelle date le contrat doit-il être suspendu ? Aujourd'hui ou une date antérieure (JJ/MM/AAAA).",
+          "help": "Généralement la date de radiation de la plaque : aujourd'hui ou avant, pas de date future. Format JJ/MM/AAAA.",
           "spoken": "date de suspension {v}",
           "ask": [
             "À partir de quelle date faut-il le suspendre ?",
@@ -155,20 +177,20 @@
           "reask": "Il me manque encore la date de début de la suspension, en général le jour de la radiation de la plaque (JJ/MM/AAAA)."
         },
         "bankAccount": {
-          "label": "Numéro de compte bancaire",
-          "prompt": "Sur quel compte (IBAN) faut-il rembourser l'éventuelle prime ?",
-          "help": "IBAN, par ex. BE68 5390 0754 7034",
+          "label": "N° de compte bancaire",
+          "prompt": "L'éventuel remboursement de prime doit-il aller sur un compte belge ? Donnez-moi l'IBAN, ou passez cette étape.",
+          "help": "Facultatif. IBAN belge, 16 caractères commençant par BE, par ex. BE68 5390 0754 7034",
           "spoken": "IBAN {v}",
           "ask": [
-            "Où devons-nous rembourser la prime non utilisée ? J'aurai besoin de l'IBAN.",
-            "Sur quel compte bancaire (IBAN) faut-il verser le remboursement de prime ?"
+            "Où devons-nous rembourser la prime non utilisée ? Donnez-moi l'IBAN belge, ou passez si il n'y en a pas.",
+            "Sur quel compte bancaire belge (IBAN) faut-il verser un éventuel remboursement ? Vous pouvez aussi passer."
           ],
-          "reask": "Il me manque encore l'IBAN pour le remboursement de prime, par ex. BE68 5390 0754 7034."
+          "reask": "S'il y a un compte de remboursement, il me faut l'IBAN belge, par ex. BE68 5390 0754 7034. Sinon, passez simplement."
         },
         "noticeOfDeletion": {
           "label": "Attestation de radiation",
           "prompt": "Veuillez joindre le document attestant la radiation de la plaque.",
-          "help": "PDF, JPEG/JPG, PNG ou DOC(X), 10 Mo max., nom de fichier sans < > : \" / \\ | ? *",
+          "help": "Un seul document : PDF, JPEG/JPG, PNG, DOC(X) ou MSG, de 1 Ko à 10 Mo, nom de fichier sans < > : \" / \\ | ? *",
           "spoken": "l'attestation de radiation ({v})",
           "ask": [
             "Pourriez-vous joindre l'attestation de radiation de la plaque ? Utilisez le trombone ci-dessous.",
@@ -189,18 +211,18 @@
         "contractNumber": {
           "label": "Contractnr.",
           "prompt": "Welk contract moet geschorst worden?",
-          "help": "AXA-contractnummer van 9 cijfers, bv. 622382121",
+          "help": "Autocontractnummer van 9 cijfers dat met 6 begint, bv. 622382121",
           "spoken": "contract {v}",
           "ask": [
             "Welk contract wilt u schorsen?",
             "Wat is het contractnummer van het voertuig?"
           ],
-          "reask": "Ik heb nog het contractnummer nodig: de 9 cijfers op de polis, bv. 622382121."
+          "reask": "Ik heb nog het contractnummer nodig: 9 cijfers beginnend met 6, bv. 622382121."
         },
         "suspensionDate": {
           "label": "Datum van schorsing",
-          "prompt": "Vanaf welke datum moet het contract geschorst worden? (DD/MM/JJJJ)",
-          "help": "Meestal de datum waarop de nummerplaat geschrapt werd. Formaat DD/MM/JJJJ.",
+          "prompt": "Vanaf welke datum moet het contract geschorst worden? Vandaag of een vroegere datum (DD/MM/JJJJ).",
+          "help": "Meestal de datum waarop de nummerplaat geschrapt werd: vandaag of vroeger, geen datum in de toekomst. Formaat DD/MM/JJJJ.",
           "spoken": "schorsingsdatum {v}",
           "ask": [
             "Vanaf welke datum moet het geschorst worden?",
@@ -210,19 +232,19 @@
         },
         "bankAccount": {
           "label": "Rekeningnummer",
-          "prompt": "Op welke rekening (IBAN) moet een eventuele premieterugbetaling gebeuren?",
-          "help": "IBAN, bv. BE68 5390 0754 7034",
+          "prompt": "Moet een eventuele premieterugbetaling naar een Belgische rekening? Geef me het IBAN, of sla het over.",
+          "help": "Optioneel. Belgisch IBAN, 16 tekens beginnend met BE, bv. BE68 5390 0754 7034",
           "spoken": "IBAN {v}",
           "ask": [
-            "Waar mogen we de niet-verbruikte premie terugstorten? Ik heb het IBAN nodig.",
-            "Op welke bankrekening (IBAN) moet de premieterugbetaling?"
+            "Waar mogen we de niet-verbruikte premie terugstorten? Geef me het Belgische IBAN, of sla het over als er geen is.",
+            "Op welke Belgische bankrekening (IBAN) moet een premieterugbetaling? U kunt dit ook overslaan."
           ],
-          "reask": "Ik heb nog het IBAN nodig voor de premieterugbetaling, bv. BE68 5390 0754 7034."
+          "reask": "Als er een rekening voor de terugbetaling is, heb ik het Belgische IBAN nodig, bv. BE68 5390 0754 7034. Anders kunt u het gewoon overslaan."
         },
         "noticeOfDeletion": {
           "label": "Attest van schrapping",
           "prompt": "Voeg het document toe waaruit blijkt dat de nummerplaat geschrapt is.",
-          "help": "PDF, JPEG/JPG, PNG of DOC(X), max. 10 MB, bestandsnaam zonder < > : \" / \\ | ? *",
+          "help": "Eén document: PDF, JPEG/JPG, PNG, DOC(X) of MSG, 1 KB tot 10 MB, bestandsnaam zonder < > : \" / \\ | ? *",
           "spoken": "het attest van schrapping ({v})",
           "ask": [
             "Kunt u het attest van schrapping van de nummerplaat toevoegen? Gebruik de paperclip hieronder.",

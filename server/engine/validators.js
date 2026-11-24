@@ -124,13 +124,20 @@ function makeValidators(formats = {}) {
     date(value, field, lang = 'en') {
       const v = parseDate(value);
       if (!v) return { ok: false, error: tr(lang, 'v.date', { value }) };
+      // "maxDate": "today" → today and earlier dates only (e.g. a suspension date)
+      if (field?.maxDate === 'today') {
+        const [d, m, y] = v.split('/').map(Number);
+        const now = new Date();
+        if (new Date(y, m - 1, d) > new Date(now.getFullYear(), now.getMonth(), now.getDate())) return { ok: false, error: tr(lang, 'v.dateFuture', { value: v }) };
+      }
       return { ok: true, value: v };
     },
     iban(value, field, lang = 'en') {
       const v = String(value).replace(/\s+/g, '').toUpperCase();
       const country = v.slice(0, 2);
+      const allowed = field?.countries || ibanCountries; // a form may accept Belgian accounts only
       if (!/^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(v)) return { ok: false, error: tr(lang, 'v.ibanFormat', { value }) };
-      if (!ibanCountries.includes(country)) return { ok: false, error: tr(lang, 'v.ibanCountry', { country }) };
+      if (!allowed.includes(country)) return { ok: false, error: tr(lang, allowed.length === 1 ? 'v.ibanOnly' : 'v.ibanCountry', { country, only: allowed[0] }) };
       if (IBAN_LENGTHS[country] && v.length !== IBAN_LENGTHS[country]) return { ok: false, error: tr(lang, 'v.ibanLength', { country, expected: IBAN_LENGTHS[country], actual: v.length }) };
       if (!ibanChecksumOk(v)) return { ok: false, error: tr(lang, 'v.ibanChecksum') };
       return { ok: true, value: v.replace(/(.{4})/g, '$1 ').trim() };
@@ -144,9 +151,11 @@ function makeValidators(formats = {}) {
     // Keywords of every language stay on the options, so any language is understood.
     enum(value, field, lang = 'en') {
       const t = String(value).toLowerCase().trim();
+      // Yes/no questions ("answerOnly") match whole words only, so "no" never matches "now" or "november".
+      const hit = field.answerOnly ? (k) => new RegExp(`(^|[^\\p{L}])${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}])`, 'u').test(t) : (k) => t.includes(k);
       const opt = field.options.find(o => o.value === t || o.label.toLowerCase() === t)
-        || field.options.find(o => (o.keywords || []).some(k => t.includes(k)));
-      if (!opt) return { ok: false, error: tr(lang, 'v.enum', { list: joinList(field.options.map(o => o.label.toLowerCase()), lang, 'or') }) };
+        || field.options.find(o => (o.keywords || []).some(hit));
+      if (!opt) return { ok: false, error: tr(lang, field.answerOnly ? 'v.choice' : 'v.enum', { list: joinList(field.options.map(o => o.label.toLowerCase()), lang, 'or') }) };
       return { ok: true, value: opt.value };
     },
     // value is a file reference produced by the upload endpoint: { fileId, name, size, mime }
@@ -155,16 +164,40 @@ function makeValidators(formats = {}) {
       const ext = (value.name.split('.').pop() || '').toLowerCase();
       if (field.accept && !field.accept.includes(ext)) return { ok: false, error: tr(lang, 'v.fileType', { ext, list: joinList(field.accept.map(a => a.toUpperCase()), lang, 'or') }) };
       if (field.maxSizeMb && value.size > field.maxSizeMb * 1024 * 1024) return { ok: false, error: tr(lang, 'v.fileSize', { max: field.maxSizeMb }) };
+      if (field.minSizeKb && value.size < field.minSizeKb * 1024) return { ok: false, error: tr(lang, 'v.fileTooSmall', { min: field.minSizeKb }) };
       if (FORBIDDEN_FILENAME.test(value.name)) return { ok: false, error: tr(lang, 'v.fileName') };
       return { ok: true, value: { fileId: value.fileId, name: value.name, size: value.size, mime: value.mime } };
     }
   };
 }
 
+// Text in the conversation language: a plain string, or { en, fr, nl }.
+function pick(text, lang) {
+  return text && typeof text === 'object' ? (text[lang] ?? text.en) : text;
+}
+
+// Form-specific rules on top of the format, from the catalogue, e.g. a contract number
+// that must start with 6, or must not start with 720:
+//   "checks": [{ "pattern": "^6", "message": { "en": "…", "fr": "…", "nl": "…" } }, { "notPattern": "^720", … }]
+function runChecks(field, value, lang) {
+  for (const c of field.checks || []) {
+    const s = String(value);
+    const bad = (c.pattern && !new RegExp(c.pattern).test(s)) || (c.notPattern && new RegExp(c.notPattern).test(s));
+    if (bad) return pick(c.message, lang).replace(/\{value\}/g, s);
+  }
+  return null;
+}
+
 // Validates a value (or list of values for multiple fields) against its field definition.
 function validateField(validators, field, raw, lang = 'en') {
-  const fn = validators[field.type];
-  if (!fn) return { ok: false, error: `Unsupported field type ${field.type}` };
+  const base = validators[field.type];
+  if (!base) return { ok: false, error: `Unsupported field type ${field.type}` };
+  const fn = (v, f, l) => {
+    const r = base(v, f, l);
+    if (!r.ok || !f.checks) return r;
+    const err = runChecks(f, r.value, l);
+    return err ? { ok: false, error: err } : r;
+  };
   if (field.multiple) {
     const items = Array.isArray(raw) ? raw : String(raw).split(/[,;]|\band\b|\bet\b|\ben\b/).map(s => s.trim()).filter(Boolean);
     const out = []; const errors = [];
@@ -179,4 +212,4 @@ function validateField(validators, field, raw, lang = 'en') {
   return fn(raw, field, lang);
 }
 
-module.exports = { makeValidators, validateField, parseDate, formatDate, ibanChecksumOk };
+module.exports = { makeValidators, validateField, parseDate, formatDate, ibanChecksumOk, pick };

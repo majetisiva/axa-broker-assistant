@@ -43,12 +43,12 @@
       ],
       "candidates": [
         "motor_suspension",
-        "general_request"
+        "contract_cancellation"
       ],
-      "question": "Do you want to suspend the contract (e.g. after the licence plate was cancelled), or terminate it for good?",
+      "question": "Do you want to suspend the contract (e.g. after the licence plate was cancelled), or cancel it for good (renon)?",
       "i18n": {
         "fr": {
-          "question": "Voulez-vous suspendre le contrat (par ex. après la radiation de la plaque) ou le résilier définitivement ?"
+          "question": "Voulez-vous suspendre le contrat (par ex. après la radiation de la plaque) ou le résilier définitivement (renon) ?"
         },
         "nl": {
           "question": "Wilt u het contract schorsen (bv. nadat de nummerplaat geschrapt werd) of definitief opzeggen?"

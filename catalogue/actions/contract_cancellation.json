@@ -1,0 +1,170 @@
+{
+  "id": "contract_cancellation",
+  "order": 3,
+  "version": "1.0.0",
+  "title": "Cancellation request",
+  "segment": "BOAR Private Individuals & BOAR Professionals",
+  "lineOfBusiness": "P&C",
+  "portalRoute": "bss/renon",
+  "mock": false,
+  "summary": "Cancel (renon) an insurance contract: the contract number and the client's cancellation letter.",
+  "session": ["cifNumber", "difNumber"],
+  "intent": {
+    "keywords": [
+      "renon",
+      "cancellation",
+      "cancellation letter",
+      "cancellation request",
+      "terminate",
+      "termination",
+      "terminate the contract",
+      "notice of termination",
+      "demande de renon",
+      "lettre de renon",
+      "renon du contrat",
+      "résilier",
+      "résiliation",
+      "lettre de résiliation",
+      "résilier le contrat",
+      "opzeg",
+      "opzeggen",
+      "opzegging",
+      "opzegbrief",
+      "opzeggingsbrief",
+      "contract opzeggen",
+      "polis opzeggen"
+    ],
+    "examples": [
+      "Cancel contract 730123456, I have the client's renon letter",
+      "The client wants to terminate the home policy"
+    ]
+  },
+  "fields": [
+    {
+      "id": "contractNumber",
+      "label": "Contract number",
+      "type": "contractNumber",
+      "required": true,
+      "checks": [
+        {
+          "notPattern": "^720",
+          "message": {
+            "en": "Contract {value} starts with 720: those contracts can't be cancelled here and must be cancelled by registered mail. Is there another contract I can help with?",
+            "fr": "Le contrat {value} commence par 720 : ces contrats ne peuvent pas être résiliés ici et doivent l'être par lettre recommandée. Y a-t-il un autre contrat pour lequel je peux vous aider ?",
+            "nl": "Contract {value} begint met 720: die contracten kunnen hier niet opgezegd worden en moeten per aangetekende brief opgezegd worden. Is er een ander contract waarmee ik kan helpen?"
+          }
+        }
+      ],
+      "prompt": "Which contract should be cancelled?",
+      "help": "9-digit AXA contract number, e.g. 622382121 or 730123456. Contracts starting with 720 must be cancelled by registered mail.",
+      "spoken": "contract {v}",
+      "ask": [
+        "Which contract should be cancelled?",
+        "What's the number of the contract to cancel?"
+      ],
+      "reask": "I still need the contract number: the 9 digits on the policy, for example 730123456."
+    },
+    {
+      "id": "cancellationLetter",
+      "label": "Cancellation letter",
+      "type": "file",
+      "required": true,
+      "accept": ["pdf", "jpeg", "jpg", "png", "doc", "docx"],
+      "minSizeKb": 1,
+      "maxSizeMb": 10,
+      "prompt": "Please attach the client's cancellation letter.",
+      "help": "One document: PDF, JPEG/JPG, PNG or DOC(X), 1 KB to 10 MB, filename without < > : \" / \\ | ? *",
+      "spoken": "the cancellation letter ({v})",
+      "ask": [
+        "Could you attach the client's cancellation letter? Use the paperclip below.",
+        "Please attach the cancellation letter signed by the client."
+      ],
+      "reask": "The last thing I need is the cancellation letter. Attach it with the paperclip or drop it into the chat."
+    }
+  ],
+  "rules": [
+    "Heads-up: if the contract is a Talensia package, the entire contract will be cancelled."
+  ],
+  "submission": {
+    "mode": "stp",
+    "endpoint": "/policy-servicing/cancellation",
+    "method": "POST",
+    "downstreamTask": "GD"
+  },
+  "intro": [
+    "Sure, I can send that cancellation for you.",
+    "No problem, let's get the cancellation request in."
+  ],
+  "i18n": {
+    "fr": {
+      "title": "Demande de renon",
+      "summary": "Résilier (renon) un contrat d'assurance : le numéro de contrat et la lettre de renon du client.",
+      "intro": [
+        "Bien sûr, je peux envoyer ce renon pour vous.",
+        "Pas de souci, introduisons la demande de renon."
+      ],
+      "rules": [
+        "À noter : si le contrat concerne un package Talensia, l'ensemble du contrat sera résilié."
+      ],
+      "fields": {
+        "contractNumber": {
+          "label": "N° de contrat",
+          "prompt": "Quel contrat faut-il résilier ?",
+          "help": "Numéro de contrat AXA à 9 chiffres, par ex. 622382121 ou 730123456. Les contrats commençant par 720 doivent être résiliés par lettre recommandée.",
+          "spoken": "contrat {v}",
+          "ask": [
+            "Quel contrat faut-il résilier ?",
+            "Quel est le numéro du contrat à résilier ?"
+          ],
+          "reask": "Il me manque encore le numéro de contrat : les 9 chiffres figurant sur la police, par ex. 730123456."
+        },
+        "cancellationLetter": {
+          "label": "Lettre de renon",
+          "prompt": "Veuillez joindre la lettre de renon du client.",
+          "help": "Un seul document : PDF, JPEG/JPG, PNG ou DOC(X), de 1 Ko à 10 Mo, nom de fichier sans < > : \" / \\ | ? *",
+          "spoken": "la lettre de renon ({v})",
+          "ask": [
+            "Pourriez-vous joindre la lettre de renon du client ? Utilisez le trombone ci-dessous.",
+            "Veuillez joindre la lettre de renon signée par le client."
+          ],
+          "reask": "Il ne me manque plus que la lettre de renon. Joignez-la avec le trombone ou glissez-la dans le chat."
+        }
+      }
+    },
+    "nl": {
+      "title": "Aanvraag tot opzegging",
+      "summary": "Een verzekeringscontract opzeggen: het contractnummer en de opzegbrief van de klant.",
+      "intro": [
+        "Natuurlijk, ik kan die opzegging voor u versturen.",
+        "Geen probleem, we dienen de opzegging in."
+      ],
+      "rules": [
+        "Let op: als het contract een Talensia-pakket is, wordt het volledige contract opgezegd."
+      ],
+      "fields": {
+        "contractNumber": {
+          "label": "Contractnr.",
+          "prompt": "Welk contract moet opgezegd worden?",
+          "help": "AXA-contractnummer van 9 cijfers, bv. 622382121 of 730123456. Contracten die met 720 beginnen, moeten per aangetekende brief opgezegd worden.",
+          "spoken": "contract {v}",
+          "ask": [
+            "Welk contract moet opgezegd worden?",
+            "Wat is het nummer van het contract dat opgezegd moet worden?"
+          ],
+          "reask": "Ik heb nog het contractnummer nodig: de 9 cijfers op de polis, bv. 730123456."
+        },
+        "cancellationLetter": {
+          "label": "Opzegbrief",
+          "prompt": "Voeg de opzegbrief van de klant toe.",
+          "help": "Eén document: PDF, JPEG/JPG, PNG of DOC(X), 1 KB tot 10 MB, bestandsnaam zonder < > : \" / \\ | ? *",
+          "spoken": "de opzegbrief ({v})",
+          "ask": [
+            "Kunt u de opzegbrief van de klant toevoegen? Gebruik de paperclip hieronder.",
+            "Voeg de door de klant ondertekende opzegbrief toe."
+          ],
+          "reask": "Het laatste wat ik nodig heb, is de opzegbrief. Voeg die toe met de paperclip of sleep hem in de chat."
+        }
+      }
+    }
+  }
+}

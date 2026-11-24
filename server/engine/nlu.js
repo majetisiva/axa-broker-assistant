@@ -176,7 +176,7 @@ function referencedField(text, action) {
     iban: ['iban', 'bank', 'account', 'rekening', 'rekeningnummer', 'compte', 'bancaire'],
     file: ['document', 'file', 'attachment', 'notice', 'pdf', 'pièce', 'attestation', 'avis', 'lettre', 'fichier', 'bijlage', 'attest', 'bewijs', 'brief', 'bestand'],
     text: ['description', 'details', 'omschrijving', 'beschrijving'],
-    enum: ['type', 'category', 'catégorie', 'soort']
+    enum: ['type', 'category', 'catégorie', 'soort', 'split', 'frequency', 'fractionnement', 'fractionment', 'splitsing', 'frequentie', 'holder', 'titulaire', 'rekeninghouder']
   };
   for (const f of action.fields) {
     if (hasTerm(t, f.label.toLowerCase())) return f;
@@ -192,8 +192,13 @@ function wantsChange(text) {
   return /\b(change|edit|update|correct|modify|wrong|modifier|changer|corriger|wijzig|wijzigen|aanpassen|verander|veranderen|fout|incorrect)\b/i.test(norm(text));
 }
 
+// "skip", "no IBAN", "passer", "overslaan": leave an optional field empty
+function wantsSkip(text) {
+  return /^(skip|pass|none|no|nope|not needed|no need|n\/a|leave (it )?(empty|blank)|passer|aucun|non|pas de|pas besoin|laisser vide|overslaan|geen|nee|niet nodig|leeg laten)\b/.test(norm(text).trim());
+}
+
 function wantsAppend(text) {
   return /\b(also|add|as well|another|plus|aussi|également|ajoute[rz]?|ook|toevoegen|eveneens)\b/.test(norm(text));
 }
 
-module.exports = { detectIntent, detectMeta, detectInjection, detectLanguage, extractEntities, referencedField, wantsChange, wantsAppend, norm, hasTerm };
+module.exports = { detectIntent, detectMeta, detectInjection, detectLanguage, extractEntities, referencedField, wantsChange, wantsAppend, wantsSkip, norm, hasTerm };

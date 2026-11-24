@@ -11,7 +11,7 @@ node server/index.js          # Node 20+, no npm install needed (zero dependenci
 # http://localhost:8080                → standalone chat interface (blank page, free-form conversation)
 # http://localhost:8080/demo/           → same assistant embedded as a floating widget on a portal-like page
 # http://localhost:8080/demo/agent.html → agent-to-agent console
-npm test                      # 27 acceptance scenarios
+npm test                      # 38 acceptance scenarios
 ```
 
 | Env var | Default | Purpose |
@@ -64,8 +64,11 @@ The assistant answers in the language the broker starts the conversation in, and
 catalogue/
   catalogue.json              ambiguous terms, unsupported topics, field formats
   actions/
-    motor_suspension.json     "Application for suspension" (from the portal screenshot)
-    change_intermediary.json  "Request to change intermediary" (from the portal screenshot)
+    motor_suspension.json     Suspension (webform "Suspension")
+    change_intermediary.json  Change of intermediary (webform "BrokerMandate")
+    contract_cancellation.json Cancellation request (webform "Renon")
+    direct_debit.json         SEPA mandate activation (webform "Domiciliation with fractionment")
+    contract_copy.json        Copy of the contract (webform "CopieContract")
     general_request.json      MOCK fallback for routes without a webform → mail (non-STP)
 server/
   index.js, app.js            HTTP API + static hosting (no framework)
@@ -82,6 +85,29 @@ angular/                      Angular wrapper component, proxy config, Java API 
 demo/                         demo host page + agent-to-agent console
 tests/scenarios.test.js       acceptance scenarios
 ```
+
+## Supported webforms and their rules
+
+The five webforms come from the business workbook `Chatbot_Hackathon_Form_Details.xlsx` (purpose, fields, validations, FR/EN screenshots). Every rule is configured in the catalogue file of the form; the engine has no form-specific code.
+
+| Form | Fields | Rules the assistant applies |
+|---|---|---|
+| **Suspension** (`motor_suspension`) | contract, suspension date, bank account, cancellation notice | contract: 9 digits starting with 6 · date: today or earlier, sent to the API as YYYY-MM-DD · IBAN: optional (the broker can skip it), Belgian only · document: PDF, JPEG/JPG, PNG, DOC(X) or MSG |
+| **Change of intermediary** (`change_intermediary`) | contract(s), producer number, notice of change | producer number: exactly 7 digits (taken from the login when it fits) · back end refuses non-motor SME contracts and invalid broker numbers · "do not add another change" |
+| **Cancellation / renon** (`contract_cancellation`) | contract, cancellation letter | contract: 9 digits, not starting with 720 (those need a registered letter) · Talensia note: the whole policy is cancelled · back end refuses non-motor SME contracts |
+| **SEPA mandate activation** (`direct_debit`) | contract, Belgian IBAN, holder = policyholder (yes/no), signed SEPA mandate, change of split (yes/no), new split | IBAN: Belgian only · "No" for the holder gives a warning but is not blocked, as on the form · new split only asked when the split changes · monthly needs a direct debit (shown as a note) |
+| **Copy of the contract** (`contract_copy`) | contract | contract: 9 digits starting with 7 (non-motor); other contracts are pointed to the AXA Portal · no document · delivered the next day via integrated message or by post |
+
+Common to all five:
+
+- one document per field, 1 KB to 10 MB, filename without `< > : " / \ | ? *`;
+- the portal session must provide a **CIF number** and a **distributor (DIF) number**, otherwise the request is not sent. When the portal passes several distributors, the broker picks one with chips;
+- the back end checks that the contract is in the broker's portfolio;
+- a contract number handed over by the portal page (e.g. for a BEP request) is prefilled.
+
+"Cancel" is ambiguous between a suspension and a cancellation, so the assistant asks which one is meant. Termination words ("terminate", "résilier", "opzeggen", "renon") go straight to the cancellation form.
+
+Catalogue keys behind these rules: `checks` (pattern / notPattern with a message in EN/FR/NL), `maxDate: "today"`, `countries`, `minSizeKb`, `askIfMissing` (optional field asked once, with a Skip chip), `answerOnly` (yes/no question matched on whole words only), option `notice`, `submitAs: "iso-date"` and the action-level `session`.
 
 ## Conversation style
 
@@ -151,21 +177,25 @@ Request statuses: `draft → ready → submitted → stp_completed | routed_to_h
 
 ## Demo script (about 5 minutes)
 
-1. **Complete input.** On the standalone chat page, type: *"Suspend contract 498765432 from 01/12/2026, refund to BE68 5390 0754 7034"*. Three of four fields are filled at once. Attach a PDF, confirm, and the DPM task shows as closed (STP).
+1. **Complete input.** On the standalone chat page, type: *"Suspend contract 622382121 from 20/11/2026, refund to BE68 5390 0754 7034"*. Three of four fields are filled at once. Attach a PDF, confirm, and the DPM task shows as closed (STP).
 2. **Missing input and reuse.** Type *"Change of intermediary for 622382121 and 730123456"*. The producer number comes from the profile, so only the document is asked for.
-3. **Correction.** Before confirming, type *"actually the date is 5 december 2026"*. Only that field changes.
-4. **Ambiguous input.** Type *"cancel contract 622382121"*. The assistant asks whether you mean suspension or termination.
+3. **Correction.** Before confirming, type *"actually the date is 15 november 2026"*. Only that field changes.
+4. **Ambiguous input.** Type *"cancel contract 622382121"*. The assistant asks whether you mean suspension or cancellation (renon).
 5. **Conditional and non-STP.** Type *"The client moved, update the address on 730123456"*. The effective date becomes required, and the request goes to a mail outbox (`outbox/*.eml`).
-6. **Back-end validation.** Suspend the home contract 730123456. The mock Java API rejects it, and only the contract number is asked for again.
-7. **Agent-to-agent.** Open `/demo/agent.html` and run the same scenarios as JSON calls.
+6. **Back-end validation.** Suspend the life contract 611122233. The mock Java API rejects it, and only the contract number is asked for again.
+7. **New forms.** *"Activate the direct debit on 622382121"* (yes/no chips, conditional split), *"renon for 720123456"* (refused: registered mail), *"copy of contract 720382121"* (no document needed).
+8. **Agent-to-agent.** Open `/demo/agent.html` and run the same scenarios as JSON calls.
 
 ## Mocks and assumptions (to confirm with the SME)
 
-- **Mocks:** `general_request` is a mock action, and `mock-backend.js` simulates the Java APIs with fictitious contracts. Any 9-digit number is treated as an active motor contract. A few numbers trigger specific outcomes: `730123456` is a home contract, so suspension is refused; `512345678` is already suspended; `000000000` is not found. GD, DPM and mail references are generated.
-- **Field formats:**
-  - Contract numbers are assumed to be 9 digits, based on the form examples.
-  - Producer numbers are assumed to be 6–8 digits.
-  - "Bank account number" on the suspension form is assumed to be a required IBAN.
-  - All of these are configurable in `catalogue/catalogue.json` and the action files.
-- **Routes and endpoints:** the suspension route `bss/suspension` and the Java endpoint paths are placeholders. Only `bss/brokermandate` was visible in the screenshots.
+- **Mocks:** `general_request` is a mock action, and `mock-backend.js` simulates the Java APIs with fictitious contracts. Any 9-digit number is treated as an active contract in the broker's portfolio. A few numbers trigger specific outcomes: `611122233` is a life contract and `730123456` a home contract (suspension refused); `612345678` is already suspended; `633344455` is not in your portfolio; `745566778` is a non-motor SME contract (renon and change of intermediary refused); producer `9999999` is an invalid broker number; `000000000` is not found. GD, DPM and mail references are generated.
+- **Demo session:** with the mock back end, the CIF (`00012345`) and DIF (`0012345`) numbers are fictitious defaults. With `BACKEND_BASE_URL` set, they must come from the portal (`cif-number`, `dif-number` attributes).
+- **Open points from the workbook:**
+  - Accepted file types: the screenshots show PDF, JPEG/JPG, PNG, DOC(X). The workbook mentions MSG for the suspension uploader (added there) and an unresolved merge conflict in the shared validator. The final list needs confirming.
+  - The workbook notes that the current webform validator does not reliably reject forbidden filename characters. The assistant does reject them.
+  - The change-of-intermediary form takes one contract number; the assistant still accepts several, as before. If the Java API takes only one, the submitter should send one request per contract.
+  - "Account holder is not the policyholder" is warned about but not blocked, as in the current code.
+  - The suspension IBAN is optional, as in the workbook; it was previously assumed to be required.
+  - Producer numbers in general are 6–8 digits; the change of intermediary needs exactly 7.
+- **Routes and endpoints:** the portal routes (`bss/suspension`, `bss/renon`, `bss/domiciliation`, `bss/copiecontract`) and the Java endpoint paths are placeholders. Only `bss/brokermandate` was visible in the screenshots.
 - **Storage:** sessions, uploads and requests are kept in memory and on local disk. For anything beyond the demo, use AXA Belgium storage. Keep any LLM endpoint within AXA-approved EU hosting.

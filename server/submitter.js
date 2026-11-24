@@ -15,7 +15,12 @@ class HttpSubmitter {
   }
 
   async submit(action, payload) {
-    const body = { ...payload };
+    const body = { ...payload, fields: { ...payload.fields } };
+    // Some webform APIs take dates as YYYY-MM-DD ("submitAs": "iso-date"); the request JSON keeps DD/MM/YYYY.
+    for (const f of action.fields || []) {
+      const v = body.fields[f.id];
+      if (f.submitAs === 'iso-date' && typeof v === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(v)) body.fields[f.id] = v.split('/').reverse().join('-');
+    }
     if (this.sendFiles) {
       body.documents = Object.entries(payload.fields)
         .filter(([, v]) => v && typeof v === 'object' && v.fileId)

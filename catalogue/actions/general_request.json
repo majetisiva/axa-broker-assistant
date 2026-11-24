@@ -17,9 +17,6 @@
       "new address",
       "moved",
       "cancel",
-      "cancellation",
-      "terminate",
-      "termination",
       "add driver",
       "add a driver",
       "change coverage",
@@ -31,15 +28,11 @@
       "change bank",
       "change iban",
       "payment method",
-      "domiciliation",
-      "direct debit",
       "other request",
       "changement d'adresse",
       "nouvelle adresse",
       "déménagé",
       "déménagement",
-      "résilier",
-      "résiliation",
       "ajouter un conducteur",
       "modifier les garanties",
       "changer de compte",
@@ -49,17 +42,14 @@
       "nieuw adres",
       "verhuisd",
       "verhuizing",
-      "opzeggen",
-      "opzegging",
       "bestuurder toevoegen",
       "waarborgen wijzigen",
       "rekeningnummer wijzigen",
-      "domiciliëring",
       "andere aanvraag"
     ],
     "examples": [
       "The client moved, please update the address on 622382121",
-      "Cancel the home policy at renewal"
+      "Add a driver to 622382121 from next month"
     ]
   },
   "fields": [

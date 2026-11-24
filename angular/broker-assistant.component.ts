@@ -26,7 +26,10 @@ export interface BrokerRequestJson {
 // so the assistant knows which form the broker is looking at.
 const ROUTE_TO_ACTION: Record<string, string> = {
   '/bss/brokermandate': 'change_intermediary',
-  '/bss/suspension': 'motor_suspension'
+  '/bss/suspension': 'motor_suspension',
+  '/bss/renon': 'contract_cancellation',
+  '/bss/domiciliation': 'direct_debit',
+  '/bss/copiecontract': 'contract_copy'
 };
 
 @Component({
@@ -38,6 +41,8 @@ const ROUTE_TO_ACTION: Record<string, string> = {
       [attr.api-base]="apiBase"
       [attr.producer-number]="session.producerNumber"
       [attr.broker-name]="session.brokerName"
+      [attr.cif-number]="session.cifNumber"
+      [attr.dif-number]="session.difNumber"
       [attr.language]="session.language"
       [attr.action-hint]="actionHint || routeHint()"
       [attr.variant]="variant">

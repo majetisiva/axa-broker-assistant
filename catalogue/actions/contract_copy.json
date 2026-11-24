@@ -1,0 +1,128 @@
+{
+  "id": "contract_copy",
+  "order": 5,
+  "version": "1.0.0",
+  "title": "Request a copy of the contract",
+  "segment": "BOAR Private Individuals & BOAR Professionals (non-motor)",
+  "lineOfBusiness": "P&C",
+  "portalRoute": "bss/copiecontract",
+  "mock": false,
+  "summary": "Request a copy of a non-motor insurance policy. It is sent the next day via integrated message, or by post if you have no management tool.",
+  "session": ["cifNumber", "difNumber"],
+  "intent": {
+    "keywords": [
+      "copy of the contract",
+      "copy of contract",
+      "contract copy",
+      "copy of the policy",
+      "copy of policy",
+      "policy copy",
+      "duplicate",
+      "copy",
+      "copie",
+      "copie du contrat",
+      "copie de contrat",
+      "copie de la police",
+      "demande de copie",
+      "duplicata",
+      "kopie",
+      "kopie van het contract",
+      "kopie van de polis",
+      "polis kopie",
+      "duplicaat"
+    ],
+    "examples": [
+      "Can I get a copy of contract 730123456?",
+      "Send me a duplicate of the home policy"
+    ]
+  },
+  "fields": [
+    {
+      "id": "contractNumber",
+      "label": "Contract number",
+      "type": "contractNumber",
+      "required": true,
+      "checks": [
+        {
+          "pattern": "^7",
+          "message": {
+            "en": "Contract {value} doesn't start with 7: copies can only be requested here for non-motor contracts (starting with 7). An updated copy of other contracts can be requested online via the AXA Portal. Is there another contract I can help with?",
+            "fr": "Le contrat {value} ne commence pas par 7 : une copie ne peut être demandée ici que pour les contrats non-auto (commençant par 7). Une copie à jour des autres contrats peut être demandée en ligne via le Portail AXA. Y a-t-il un autre contrat pour lequel je peux vous aider ?",
+            "nl": "Contract {value} begint niet met 7: een kopie kan hier alleen aangevraagd worden voor niet-autocontracten (beginnend met 7). Een bijgewerkte kopie van andere contracten kunt u online aanvragen via het AXA-portaal. Is er een ander contract waarmee ik kan helpen?"
+          }
+        }
+      ],
+      "prompt": "Which contract do you need a copy of?",
+      "help": "9-digit non-motor contract number starting with 7, e.g. 720382121",
+      "spoken": "contract {v}",
+      "ask": [
+        "Which contract do you need a copy of?",
+        "What's the number of the contract to copy?"
+      ],
+      "reask": "I still need the contract number: 9 digits starting with 7, for example 720382121."
+    }
+  ],
+  "rules": [
+    "The document will be sent the next day via integrated message, or by post if you don't have a management tool."
+  ],
+  "submission": {
+    "mode": "stp",
+    "endpoint": "/policy-servicing/contract-copy",
+    "method": "POST",
+    "downstreamTask": "GD"
+  },
+  "intro": [
+    "Sure, I can request a copy of the contract.",
+    "No problem, let's request that copy."
+  ],
+  "i18n": {
+    "fr": {
+      "title": "Demande de copie contrat",
+      "summary": "Demander une copie d'une police non-auto. Elle est envoyée le lendemain via bloc retour, ou par courrier si vous ne disposez pas d'un outil de gestion.",
+      "intro": [
+        "Bien sûr, je peux demander une copie du contrat.",
+        "Pas de souci, demandons cette copie."
+      ],
+      "rules": [
+        "Le document vous sera transmis le lendemain via bloc retour, ou par courrier si vous ne disposez pas d'un outil de gestion."
+      ],
+      "fields": {
+        "contractNumber": {
+          "label": "N° de contrat",
+          "prompt": "De quel contrat avez-vous besoin d'une copie ?",
+          "help": "Numéro de contrat non-auto à 9 chiffres commençant par 7, par ex. 720382121",
+          "spoken": "contrat {v}",
+          "ask": [
+            "De quel contrat avez-vous besoin d'une copie ?",
+            "Quel est le numéro du contrat à copier ?"
+          ],
+          "reask": "Il me manque encore le numéro de contrat : 9 chiffres commençant par 7, par ex. 720382121."
+        }
+      }
+    },
+    "nl": {
+      "title": "Aanvraag kopie contract",
+      "summary": "Een kopie van een niet-autopolis aanvragen. Die wordt de volgende dag via geïntegreerd bericht verstuurd, of per post als u geen beheertool hebt.",
+      "intro": [
+        "Natuurlijk, ik kan een kopie van het contract aanvragen.",
+        "Geen probleem, we vragen die kopie aan."
+      ],
+      "rules": [
+        "Het document wordt de volgende dag via geïntegreerd bericht verstuurd, of per post als u geen beheertool hebt."
+      ],
+      "fields": {
+        "contractNumber": {
+          "label": "Contractnr.",
+          "prompt": "Van welk contract hebt u een kopie nodig?",
+          "help": "Niet-autocontractnummer van 9 cijfers dat met 7 begint, bv. 720382121",
+          "spoken": "contract {v}",
+          "ask": [
+            "Van welk contract hebt u een kopie nodig?",
+            "Wat is het nummer van het contract?"
+          ],
+          "reask": "Ik heb nog het contractnummer nodig: 9 cijfers beginnend met 7, bv. 720382121."
+        }
+      }
+    }
+  }
+}

@@ -46,9 +46,18 @@ function createApp(opts = {}) {
     req.on('error', reject);
   });
 
+  // The webforms need the CIF and distributor (DIF) numbers of the portal session. The portal passes them
+  // in `context`; in the demo (mock back end) fictitious ones are used so the chat works without a login.
+  const demoSession = opts.demoSession ?? !process.env.BACKEND_BASE_URL;
+  const DEMO_CONTEXT = { cifNumber: '00012345', difNumber: '0012345' };
+
   const getSession = (sid, mode = 'human', context = {}) => {
     let s = sid && sessions.get(sid);
-    if (!s) { s = sessions.create({}); engine.initSession(s, { mode, context }); }
+    if (!s) {
+      const given = Object.fromEntries(Object.entries(context || {}).filter(([, v]) => v !== undefined));
+      s = sessions.create({});
+      engine.initSession(s, { mode, context: demoSession ? { ...DEMO_CONTEXT, ...given } : given });
+    }
     return s;
   };
 
